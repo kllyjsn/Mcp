@@ -71,11 +71,10 @@ function buildEndOfTrack(): number[] {
 
 const TICKS_PER_BEAT = 480;
 
-function buildNoteEvents(track: Track, tempo: number): number[] {
+function buildNoteEvents(track: Track, channel: number): number[] {
   const events: Array<{ tick: number; data: number[] }> = [];
-  const channel = 9; // will be overridden per track
 
-  const ch = track.name === 'Drums' ? 9 : 0;
+  const ch = track.name === 'Drums' ? 9 : channel;
 
   for (const note of track.notes) {
     const startTick = Math.max(0, Math.round(note.startBeat * TICKS_PER_BEAT));
@@ -111,10 +110,6 @@ function buildNoteEvents(track: Track, tempo: number): number[] {
     lastTick = evt.tick;
   }
 
-  // Suppress unused variable warning
-  void channel;
-  void tempo;
-
   return bytes;
 }
 
@@ -130,11 +125,14 @@ export function compositionToMidi(composition: Composition): Uint8Array {
   ];
   tracks.push(tempoTrack);
 
-  // Track 1-N: instrument tracks
+  // Track 1-N: instrument tracks (each gets a unique MIDI channel, skipping ch 9 = drums)
+  let midiChannel = 0;
   for (const track of composition.tracks) {
+    const ch = track.name === 'Drums' ? 9 : midiChannel++;
+    if (midiChannel === 9) midiChannel = 10; // skip drum channel for melodic tracks
     const trackBytes: number[] = [
       ...buildTrackNameEvent(track.name),
-      ...buildNoteEvents(track, composition.params.tempo),
+      ...buildNoteEvents(track, ch),
       ...buildEndOfTrack(),
     ];
     tracks.push(trackBytes);

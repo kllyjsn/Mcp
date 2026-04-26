@@ -19,7 +19,7 @@ const STYLE_TENSION: Record<CompositionStyle, TensionProfile> = {
       // Sonata-form: exposition → development (tension rise) → recapitulation
       if (t < 0.3) return 0.3 + t * 0.5;
       if (t < 0.7) return 0.45 + Math.sin((t - 0.3) / 0.4 * Math.PI) * 0.55;
-      return 0.8 - (t - 0.7) * 2;
+      return 0.45 - (t - 0.7) * 1.5;
     },
     climaxPoint: 0.6,
   },

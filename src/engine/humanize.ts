@@ -66,7 +66,7 @@ export function humanizeTrack(
 
   return notes.map((note, i) => {
     if (note.isGraceNote) {
-      return { ...note, velocity: Math.round(note.velocity * 0.65) };
+      return { ...note, startBeat: Math.max(0, note.startBeat), velocity: Math.round(note.velocity * 0.65) };
     }
 
     if (i % 16 === 0) {
