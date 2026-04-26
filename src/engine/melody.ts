@@ -156,27 +156,44 @@ export function generateBassLine(
 
     const rootMidi = Math.min(...activeChord.voicing) - 12;
 
-    if (params.rhythmicVariety >= 6 && Math.random() > 0.5) {
-      notes.push({
-        pitch: rootMidi,
-        velocity: 80 + Math.floor(Math.random() * 20),
-        duration: 0.75,
-        startBeat: currentBeat,
-      });
+    const chordDur = Math.min(activeChord.duration, totalBeats - currentBeat);
+
+    if (params.rhythmicVariety >= 6 && Math.random() > 0.5 && chordDur >= 2) {
       const fifth = rootMidi + 7;
-      notes.push({
-        pitch: nearestScaleNote(fifth, params.key, params.scale),
-        velocity: 65 + Math.floor(Math.random() * 20),
-        duration: 0.75,
-        startBeat: currentBeat + 1,
-      });
-      notes.push({
-        pitch: rootMidi,
-        velocity: 70 + Math.floor(Math.random() * 15),
-        duration: 1.5,
-        startBeat: currentBeat + 2,
-      });
-      currentBeat += 4;
+      if (chordDur >= 4) {
+        notes.push({
+          pitch: rootMidi,
+          velocity: 80 + Math.floor(Math.random() * 20),
+          duration: 0.75,
+          startBeat: currentBeat,
+        });
+        notes.push({
+          pitch: nearestScaleNote(fifth, params.key, params.scale),
+          velocity: 65 + Math.floor(Math.random() * 20),
+          duration: 0.75,
+          startBeat: currentBeat + 1,
+        });
+        notes.push({
+          pitch: rootMidi,
+          velocity: 70 + Math.floor(Math.random() * 15),
+          duration: 1.5,
+          startBeat: currentBeat + 2,
+        });
+      } else {
+        notes.push({
+          pitch: rootMidi,
+          velocity: 80 + Math.floor(Math.random() * 20),
+          duration: chordDur / 2 * 0.9,
+          startBeat: currentBeat,
+        });
+        notes.push({
+          pitch: nearestScaleNote(fifth, params.key, params.scale),
+          velocity: 65 + Math.floor(Math.random() * 20),
+          duration: chordDur / 2 * 0.9,
+          startBeat: currentBeat + chordDur / 2,
+        });
+      }
+      currentBeat += chordDur;
     } else {
       const duration = Math.min(activeChord.duration, totalBeats - currentBeat);
       notes.push({

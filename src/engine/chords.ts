@@ -159,7 +159,10 @@ export function generateChordProgression(
       else if (quality === 'minor7') quality = 'minor9';
     }
 
-    const rootIndex = (NOTE_NAMES.indexOf(key) + (SCALE_INTERVALS[scale]?.[degree] ?? degree * 2)) % 12;
+    const scaleIntervals = SCALE_INTERVALS[scale];
+    const majorIntervals = SCALE_INTERVALS['major'];
+    const rootInterval = (scaleIntervals && degree < scaleIntervals.length) ? scaleIntervals[degree] : majorIntervals[degree];
+    const rootIndex = (NOTE_NAMES.indexOf(key) + rootInterval) % 12;
     const chordRoot = NOTE_NAMES[rootIndex];
 
     const voicing = voiceLeadChord(prevVoicing, chordRoot, quality);
@@ -186,7 +189,8 @@ export function generateChordProgression(
       const passingDegree = (nextDegree + 4) % 7; // dominant approach
       const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
       const passingQuality: ChordQuality = complexity >= 5 ? 'dominant7' : 'major';
-      const passingRootIndex = (NOTE_NAMES.indexOf(key) + (SCALE_INTERVALS[scale]?.[passingDegree] ?? passingDegree * 2)) % 12;
+      const passingInterval = (scaleIntervals && passingDegree < scaleIntervals.length) ? scaleIntervals[passingDegree] : majorIntervals[passingDegree];
+      const passingRootIndex = (NOTE_NAMES.indexOf(key) + passingInterval) % 12;
       const passingRoot = NOTE_NAMES[passingRootIndex];
       const passingVoicing = voiceLeadChord(voicing, passingRoot, passingQuality);
 
