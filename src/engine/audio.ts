@@ -196,13 +196,13 @@ function scheduleTrackNotes(
       const time = `0:${note.startBeat}:0`;
       const vel = note.velocity / 127;
 
-      if (note.pitch === 36 || note.pitch === 49) {
+      if (note.pitch === 36) {
         transport.schedule((t) => {
           drumSynths.kick.triggerAttackRelease('C1', '8n', t, vel);
         }, time);
       } else if (note.pitch === 38) {
         transport.schedule((t) => {
-          drumSynths.snare.triggerAttackRelease('8n', t);
+          drumSynths.snare.triggerAttackRelease('8n', t, vel);
         }, time);
       } else {
         transport.schedule((t) => {
