@@ -5,6 +5,7 @@ import {
   stopRecording,
   initAudio,
   disableLoop,
+  setLoop,
 } from '../engine/audio';
 import { Download, Circle } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export function ExportButton() {
       await initAudio();
 
       stopPlayback();
+      const wasLooping = useStore.getState().transport.loop;
       disableLoop();
       await startRecording();
       await togglePlay();
@@ -46,6 +48,7 @@ export function ExportButton() {
             URL.revokeObjectURL(url);
           }
         } finally {
+          if (wasLooping) setLoop(0, totalBeats);
           setExporting(false);
         }
       }, durationMs);
