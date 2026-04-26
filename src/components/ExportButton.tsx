@@ -8,7 +8,7 @@ import {
 import { Download, Circle } from 'lucide-react';
 
 export function ExportButton() {
-  const { composition, params, isExporting, setExporting, stopPlayback, togglePlay } = useStore();
+  const { composition, isExporting, setExporting, stopPlayback, togglePlay } = useStore();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export function ExportButton() {
       await startRecording();
       await togglePlay();
 
-      const totalBeats = params.measures * params.timeSignature[0];
-      const durationMs = (totalBeats / params.tempo) * 60 * 1000 + 1500;
+      const totalBeats = composition.params.measures * composition.params.timeSignature[0];
+      const durationMs = (totalBeats / composition.params.tempo) * 60 * 1000 + 1500;
 
       timeoutRef.current = setTimeout(async () => {
         try {
