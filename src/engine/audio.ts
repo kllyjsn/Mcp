@@ -155,13 +155,27 @@ export function buildComposition(composition: Composition): void {
     channels.set(track.id, channel);
     effects.set(track.id, fxChain);
 
-    scheduleTrackNotes(track, instrument);
+    scheduleTrackNotes(track, instrument, fxChain, channel);
+  }
+}
+
+function connectDrumSynthToChain(
+  synth: Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth,
+  fxChain: Tone.ToneAudioNode[],
+  channel: Tone.Channel,
+): void {
+  if (fxChain.length > 0) {
+    synth.connect(fxChain[0]);
+  } else {
+    synth.connect(channel);
   }
 }
 
 function scheduleTrackNotes(
   track: Track,
   instrument: Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth,
+  fxChain: Tone.ToneAudioNode[],
+  channel: Tone.Channel,
 ): void {
   const transport = Tone.getTransport();
 
@@ -174,15 +188,12 @@ function scheduleTrackNotes(
 
     drumSynthInstances.push(drumSynths.kick, drumSynths.snare, drumSynths.hihat);
 
-    const ch = channels.get(track.id);
-    if (ch) {
-      drumSynths.kick.connect(ch);
-      drumSynths.snare.connect(ch);
-      drumSynths.hihat.connect(ch);
-    }
+    connectDrumSynthToChain(drumSynths.kick, fxChain, channel);
+    connectDrumSynthToChain(drumSynths.snare, fxChain, channel);
+    connectDrumSynthToChain(drumSynths.hihat, fxChain, channel);
 
     for (const note of track.notes) {
-      const time = `0:0:${note.startBeat * 2}`;
+      const time = `0:${note.startBeat}:0`;
       const vel = note.velocity / 127;
 
       if (note.pitch === 36 || note.pitch === 49) {
@@ -205,9 +216,9 @@ function scheduleTrackNotes(
   if (!(instrument instanceof Tone.PolySynth)) return;
 
   for (const note of track.notes) {
-    const time = `0:0:${note.startBeat * 2}`;
+    const time = `0:${note.startBeat}:0`;
     const noteName = midiNoteToString(note.pitch);
-    const duration = `0:0:${note.duration * 2}`;
+    const duration = `0:${note.duration}:0`;
     const velocity = note.velocity / 127;
 
     transport.schedule((t) => {
@@ -283,8 +294,8 @@ export function getTransportProgress(totalBeats: number, tempo: number): number 
 export function setLoop(start: number, end: number): void {
   const transport = Tone.getTransport();
   transport.loop = true;
-  transport.loopStart = `0:0:${start * 2}`;
-  transport.loopEnd = `0:0:${end * 2}`;
+  transport.loopStart = `0:${start}:0`;
+  transport.loopEnd = `0:${end}:0`;
 }
 
 export function disableLoop(): void {
