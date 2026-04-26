@@ -32,19 +32,23 @@ export function ExportButton() {
       const durationMs = (totalBeats / params.tempo) * 60 * 1000 + 1500;
 
       timeoutRef.current = setTimeout(async () => {
-        stopPlayback();
-        const blob = await stopRecording();
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${composition.name.replace(/[^a-zA-Z0-9 ]/g, '')}.webm`;
-          a.click();
-          URL.revokeObjectURL(url);
+        try {
+          stopPlayback();
+          const blob = await stopRecording();
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${composition.name.replace(/[^a-zA-Z0-9 ]/g, '')}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        } finally {
+          setExporting(false);
         }
-        setExporting(false);
       }, durationMs);
     } catch {
+      await stopRecording().catch(() => {});
       setExporting(false);
     }
   };
