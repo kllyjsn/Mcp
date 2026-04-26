@@ -1,17 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useStore } from '../stores/useStore';
 import {
   startRecording,
   stopRecording,
-  play,
-  stop,
   initAudio,
 } from '../engine/audio';
 import { Download, Circle } from 'lucide-react';
 
 export function ExportButton() {
-  const { composition, params } = useStore();
-  const [exporting, setExporting] = useState(false);
+  const { composition, params, isExporting, setExporting, stopPlayback, togglePlay } = useStore();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -21,21 +18,21 @@ export function ExportButton() {
   }, []);
 
   const handleExport = async () => {
-    if (!composition || exporting) return;
+    if (!composition || isExporting) return;
     setExporting(true);
 
     try {
       await initAudio();
 
-      stop();
+      stopPlayback();
       await startRecording();
-      play();
+      await togglePlay();
 
       const totalBeats = params.measures * params.timeSignature[0];
       const durationMs = (totalBeats / params.tempo) * 60 * 1000 + 1500;
 
       timeoutRef.current = setTimeout(async () => {
-        stop();
+        stopPlayback();
         const blob = await stopRecording();
         if (blob) {
           const url = URL.createObjectURL(blob);
@@ -57,15 +54,15 @@ export function ExportButton() {
   return (
     <button
       onClick={handleExport}
-      disabled={exporting}
+      disabled={isExporting}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-        exporting
+        isExporting
           ? 'bg-red-600/20 text-red-400 border border-red-600/30'
           : 'bg-zinc-800/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-700/30'
       }`}
-      title={exporting ? 'Recording...' : 'Export audio'}
+      title={isExporting ? 'Recording...' : 'Export audio'}
     >
-      {exporting ? (
+      {isExporting ? (
         <>
           <Circle size={10} className="text-red-400 animate-pulse" fill="currentColor" />
           Recording...

@@ -16,8 +16,8 @@ export function Visualizer() {
     const analyser = getAnalyser();
 
     const draw = () => {
-      const width = canvas.width;
-      const height = canvas.height;
+      const width = canvas.width / window.devicePixelRatio;
+      const height = canvas.height / window.devicePixelRatio;
 
       ctx.clearRect(0, 0, width, height);
 

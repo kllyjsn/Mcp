@@ -26,6 +26,7 @@ interface ComposerStore {
   transport: TransportState;
   selectedTrackId: string | null;
   isGenerating: boolean;
+  isExporting: boolean;
   compositionHistory: Composition[];
   activeView: 'arrange' | 'mixer' | 'piano_roll';
 
@@ -42,6 +43,7 @@ interface ComposerStore {
   setActiveView: (view: 'arrange' | 'mixer' | 'piano_roll') => void;
   setTempo: (bpm: number) => void;
   toggleLoop: () => void;
+  setExporting: (v: boolean) => void;
 }
 
 const DEFAULT_PARAMS: CompositionParams = {
@@ -70,6 +72,7 @@ export const useStore = create<ComposerStore>((set, get) => ({
   },
   selectedTrackId: null,
   isGenerating: false,
+  isExporting: false,
   compositionHistory: [],
   activeView: 'arrange',
 
@@ -209,6 +212,8 @@ export const useStore = create<ComposerStore>((set, get) => ({
   },
 
   setActiveView: (view) => set({ activeView: view }),
+
+  setExporting: (v) => set({ isExporting: v }),
 
   setTempo: (bpm) => {
     setTempo(bpm);

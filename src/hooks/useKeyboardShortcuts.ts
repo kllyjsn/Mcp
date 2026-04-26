@@ -2,13 +2,18 @@ import { useEffect } from 'react';
 import { useStore } from '../stores/useStore';
 
 export function useKeyboardShortcuts() {
-  const { togglePlay, stopPlayback, generate, composition, toggleLoop } = useStore();
+  const { togglePlay, stopPlayback, generate, composition, toggleLoop, isExporting } = useStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore shortcuts when typing in inputs
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      // Block transport shortcuts during export
+      if (isExporting && (e.code === 'Space' || e.code === 'Escape')) {
+        e.preventDefault();
         return;
       }
 
@@ -38,5 +43,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, stopPlayback, generate, composition, toggleLoop]);
+  }, [togglePlay, stopPlayback, generate, composition, toggleLoop, isExporting]);
 }
