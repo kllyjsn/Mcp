@@ -1,7 +1,10 @@
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church } from 'lucide-react';
+import { COMPOSITION_PRESETS } from '../engine/composer';
+import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church, Headphones, Moon, Building2, CloudMoon, Mic } from 'lucide-react';
+
+const ALL_KEY_NAMES: NoteName[] = [...NOTE_NAMES, 'Db', 'Eb', 'Ab', 'Bb'];
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -18,6 +21,10 @@ const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'whole_tone', label: 'Whole Tone' },
   { value: 'locrian', label: 'Locrian' },
   { value: 'diminished', label: 'Diminished' },
+  { value: 'bebop_dominant', label: 'Bebop Dominant' },
+  { value: 'bebop_major', label: 'Bebop Major' },
+  { value: 'hungarian_minor', label: 'Hungarian Minor' },
+  { value: 'lydian_dominant', label: 'Lydian Dominant' },
 ];
 
 const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] = [
@@ -25,10 +32,15 @@ const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] =
   { value: 'romantic', label: 'Romantic', icon: Heart },
   { value: 'impressionist', label: 'Impressionist', icon: Waves },
   { value: 'jazz', label: 'Jazz', icon: Sparkles },
+  { value: 'modal_jazz', label: 'Modal Jazz', icon: Moon },
   { value: 'neo_soul', label: 'Neo Soul', icon: Sparkles },
   { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
   { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
   { value: 'gospel', label: 'Gospel', icon: Church },
+  { value: 'listening_room', label: 'Listening Room', icon: Headphones },
+  { value: 'chamber', label: 'Chamber', icon: Building2 },
+  { value: 'r_and_b', label: 'R&B', icon: Mic },
+  { value: 'trip_hop', label: 'Trip-Hop', icon: CloudMoon },
   { value: 'ambient', label: 'Ambient', icon: Waves },
   { value: 'minimalist', label: 'Minimalist', icon: Zap },
   { value: 'cinematic', label: 'Cinematic', icon: Music },
@@ -73,11 +85,35 @@ function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
 }
 
 export function CompositionPanel() {
-  const { params, setParam } = useStore();
+  const { params, setParam, applyPreset } = useStore();
 
   return (
     <div className="w-72 bg-zinc-900/60 border-r border-zinc-800/50 overflow-y-auto custom-scrollbar">
       <div className="p-4 space-y-5">
+
+        {/* Presets */}
+        <div>
+          <h3 className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3 flex items-center gap-2">
+            <Sparkles size={12} /> Presets
+          </h3>
+          <select
+            onChange={e => {
+              const preset = COMPOSITION_PRESETS[+e.target.value];
+              if (preset) applyPreset(preset);
+            }}
+            defaultValue=""
+            className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-amber-600/50"
+          >
+            <option value="" disabled>Choose a preset...</option>
+            {COMPOSITION_PRESETS.map((p, i) => (
+              <option key={i} value={i}>{p.name}</option>
+            ))}
+          </select>
+
+        </div>
+
+        <div className="h-px bg-zinc-800/50" />
+
         <div>
           <h3 className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3 flex items-center gap-2">
             <Music size={12} /> Tonality
@@ -90,7 +126,7 @@ export function CompositionPanel() {
                 onChange={e => setParam('key', e.target.value as NoteName)}
                 className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-amber-600/50"
               >
-                {NOTE_NAMES.map(n => (
+                {ALL_KEY_NAMES.map(n => (
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
