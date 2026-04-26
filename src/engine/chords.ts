@@ -198,6 +198,10 @@ export function generateChordProgression(
     const diatonic = diatonicChords[degree % diatonicChords.length];
 
     let quality = diatonic.quality;
+    // Sus chords for color (before 7th extension so plain major triads can become sus)
+    if (complexity >= 6 && Math.random() > 0.8) {
+      if (quality === 'major') quality = Math.random() > 0.5 ? 'sus4' : 'sus2';
+    }
     // Extend chord qualities based on complexity
     if (complexity >= 4) {
       if (quality === 'major') quality = 'major7';
@@ -206,10 +210,6 @@ export function generateChordProgression(
     if (complexity >= 7 && Math.random() > 0.5) {
       if (quality === 'major7') quality = 'major9';
       else if (quality === 'minor7') quality = 'minor9';
-    }
-    // Sus chords for color at high complexity
-    if (complexity >= 6 && Math.random() > 0.8) {
-      if (quality === 'major' || quality === 'major7') quality = Math.random() > 0.5 ? 'sus4' : 'sus2';
     }
     // Secondary dominant: V/V approach at high complexity
     if (complexity >= 8 && degree === 1 && Math.random() > 0.5) {

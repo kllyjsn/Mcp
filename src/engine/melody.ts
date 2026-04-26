@@ -204,7 +204,12 @@ export function generateMelody(
       }
     }
 
-    notes.push(...motifNotes);
+    // Clamp notes to composition boundary
+    for (const n of motifNotes) {
+      if (n.startBeat >= totalBeats) break;
+      n.duration = Math.min(n.duration, totalBeats - n.startBeat);
+      notes.push(n);
+    }
 
     // Rest between phrases (breathing space)
     const motifDuration = developed.rhythm.reduce((a, b) => a + b, 0);
