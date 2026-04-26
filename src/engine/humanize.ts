@@ -101,8 +101,19 @@ export function humanizeTrack(
   style: CompositionStyle,
   trackName: string,
   beatsPerBar: number = 4,
+  amount: number = 5,
 ): Note[] {
-  const opts = STYLE_HUMANIZE[style] ?? STYLE_HUMANIZE.classical;
+  if (amount <= 0) return notes;
+  const scale = Math.min(amount, 10) / 10;
+  const base = STYLE_HUMANIZE[style] ?? STYLE_HUMANIZE.classical;
+  const opts: HumanizeOptions = {
+    timingJitter: base.timingJitter * scale,
+    velocitySpread: base.velocitySpread * scale,
+    swingAmount: base.swingAmount * scale,
+    driftRate: base.driftRate * scale,
+    accentDownbeats: base.accentDownbeats,
+    ghostNoteChance: base.ghostNoteChance * scale,
+  };
 
   if (trackName === 'Drums') {
     return humanizeDrums(notes, opts, beatsPerBar);

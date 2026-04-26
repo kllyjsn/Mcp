@@ -50,6 +50,7 @@ export function ScoreView() {
   const isDrums = track.name === 'Drums';
   const isBass = track.name === 'Bass';
   const clef = isBass ? 'bass' : 'treble';
+  const staffMiddleY = (clef === 'treble' ? TREBLE_TOP : BASS_TOP) + 2 * STAFF_LINE_SPACING;
 
   return (
     <div className="flex-1 overflow-auto custom-scrollbar bg-zinc-950/30 p-4">
@@ -183,7 +184,7 @@ export function ScoreView() {
                   x1={x + 9}
                   x2={x + 9}
                   y1={y}
-                  y2={y < TREBLE_TOP + 2 * STAFF_LINE_SPACING ? y + 24 : y - 24}
+                  y2={y < staffMiddleY ? y + 24 : y - 24}
                   stroke={track.color}
                   strokeWidth={1}
                   opacity={opacity}
@@ -195,7 +196,7 @@ export function ScoreView() {
                     x1={x + 9}
                     x2={x + 9}
                     y1={y}
-                    y2={y < TREBLE_TOP + 2 * STAFF_LINE_SPACING ? y + 24 : y - 24}
+                    y2={y < staffMiddleY ? y + 24 : y - 24}
                     stroke={track.color}
                     strokeWidth={1}
                     opacity={opacity}
@@ -203,8 +204,8 @@ export function ScoreView() {
                   <line
                     x1={x + 9}
                     x2={x + 16}
-                    y1={y < TREBLE_TOP + 2 * STAFF_LINE_SPACING ? y + 24 : y - 24}
-                    y2={y < TREBLE_TOP + 2 * STAFF_LINE_SPACING ? y + 18 : y - 18}
+                    y1={y < staffMiddleY ? y + 24 : y - 24}
+                    y2={y < staffMiddleY ? y + 18 : y - 18}
                     stroke={track.color}
                     strokeWidth={1}
                     opacity={opacity}
@@ -221,7 +222,7 @@ export function ScoreView() {
           const x = xOffset + note.startBeat * beatWidth;
           const yMap: Record<number, number> = {
             36: TREBLE_TOP + 4 * STAFF_LINE_SPACING,     // kick
-            38: TREBLE_TOP + 2 * STAFF_LINE_SPACING,     // snare
+            38: staffMiddleY,     // snare
             42: TREBLE_TOP,                                // hihat closed
             46: TREBLE_TOP - STAFF_LINE_SPACING,          // hihat open
             51: TREBLE_TOP - STAFF_LINE_SPACING * 0.5,   // ride
@@ -230,7 +231,7 @@ export function ScoreView() {
             45: TREBLE_TOP + 3 * STAFF_LINE_SPACING,     // tom low
             50: TREBLE_TOP + 1.5 * STAFF_LINE_SPACING,   // tom high
           };
-          const y = yMap[note.pitch] ?? TREBLE_TOP + 2 * STAFF_LINE_SPACING;
+          const y = yMap[note.pitch] ?? staffMiddleY;
           const isHihatOrCymbal = [42, 46, 49, 51].includes(note.pitch);
 
           return (

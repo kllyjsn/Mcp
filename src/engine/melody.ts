@@ -1,6 +1,6 @@
 import type { Note, Chord, CompositionParams } from '../types/music';
 import { getScaleNotesMultiOctave, nearestScaleNote } from './scales';
-import { humanize } from './humanize';
+
 
 function weightedRandom(weights: number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
@@ -260,7 +260,7 @@ export function generateMelody(
   }
 
   const shaped = applyDynamics(notes, params.dynamics);
-  return humanize(shaped, params.humanize);
+  return shaped;
 }
 
 export function generateBassLine(
@@ -304,7 +304,7 @@ export function generateBassLine(
   }
 
   const shaped = applyDynamics(notes, params.dynamics);
-  return humanize(shaped, params.humanize);
+  return shaped;
 }
 
 function generateWalkingBass(
@@ -445,7 +445,7 @@ export function generatePadVoicings(
   }
 
   const shaped = applyDynamics(notes, params.dynamics);
-  return humanize(shaped, params.humanize);
+  return shaped;
 }
 
 export function generateArpeggio(
@@ -486,7 +486,7 @@ export function generateArpeggio(
   }
 
   const shaped = applyDynamics(notes, params.dynamics);
-  return humanize(shaped, params.humanize);
+  return shaped;
 }
 
 export function generateDrumPattern(
@@ -705,7 +705,7 @@ function generateLoFiDrums(params: CompositionParams): Note[] {
     }
   }
 
-  return humanize(notes, params.humanize);
+  return notes;
 }
 
 export function generateCountermelody(
@@ -761,5 +761,5 @@ export function generateCountermelody(
   }
 
   const shaped = applyDynamics(notes, params.dynamics);
-  return humanize(shaped, params.humanize);
+  return shaped;
 }

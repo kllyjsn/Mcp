@@ -199,12 +199,13 @@ export function compose(params: CompositionParams): Composition {
 
   const sv = STYLE_VOICINGS[params.style];
 
-  const melodyNotes = humanizeTrack(generateMelody(params, chords, [4, 6]), params.style, 'Melody', beatsPerBar);
-  const countermelodyNotes = humanizeTrack(generateCountermelody(params, chords, melodyNotes), params.style, 'Countermelody', beatsPerBar);
-  const bassNotes = humanizeTrack(generateBassLine(params, chords), params.style, 'Bass', beatsPerBar);
-  const padNotes = humanizeTrack(generatePadVoicings(params, chords), params.style, 'Harmony', beatsPerBar);
-  const arpeggioNotes = humanizeTrack(generateArpeggio(params, chords), params.style, 'Arpeggio', beatsPerBar);
-  const drumNotes = humanizeTrack(generateDrumPattern(params), params.style, 'Drums', beatsPerBar);
+  const h = params.humanize;
+  const melodyNotes = humanizeTrack(generateMelody(params, chords, [4, 6]), params.style, 'Melody', beatsPerBar, h);
+  const countermelodyNotes = humanizeTrack(generateCountermelody(params, chords, melodyNotes), params.style, 'Countermelody', beatsPerBar, h);
+  const bassNotes = humanizeTrack(generateBassLine(params, chords), params.style, 'Bass', beatsPerBar, h);
+  const padNotes = humanizeTrack(generatePadVoicings(params, chords), params.style, 'Harmony', beatsPerBar, h);
+  const arpeggioNotes = humanizeTrack(generateArpeggio(params, chords), params.style, 'Arpeggio', beatsPerBar, h);
+  const drumNotes = humanizeTrack(generateDrumPattern(params), params.style, 'Drums', beatsPerBar, h);
 
   const tracks: Track[] = [
     {
@@ -283,7 +284,7 @@ export function compose(params: CompositionParams): Composition {
 
   return {
     id: Math.random().toString(36).slice(2, 10),
-    name: `Composition in ${params.key} ${params.scale}`,
+    name: `Composition in ${params.key} ${params.scale.replace(/_/g, ' ')}`,
     params,
     tracks,
     chordProgression: chords,
@@ -299,20 +300,21 @@ export function recomposeTrack(
   const { params, chordProgression } = composition;
   const beatsPerBar = params.timeSignature[0];
 
+  const h = params.humanize;
   let newNotes;
   switch (track.name) {
-    case 'Melody': newNotes = humanizeTrack(generateMelody(params, chordProgression, [4, 6]), params.style, 'Melody', beatsPerBar); break;
+    case 'Melody': newNotes = humanizeTrack(generateMelody(params, chordProgression, [4, 6]), params.style, 'Melody', beatsPerBar, h); break;
     case 'Countermelody': {
       const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
       const primaryMelody = melodyTrack ? melodyTrack.notes : [];
-      newNotes = humanizeTrack(generateCountermelody(params, chordProgression, primaryMelody), params.style, 'Countermelody', beatsPerBar);
+      newNotes = humanizeTrack(generateCountermelody(params, chordProgression, primaryMelody), params.style, 'Countermelody', beatsPerBar, h);
       break;
     }
-    case 'Bass': newNotes = humanizeTrack(generateBassLine(params, chordProgression), params.style, 'Bass', beatsPerBar); break;
-    case 'Harmony': newNotes = humanizeTrack(generatePadVoicings(params, chordProgression), params.style, 'Harmony', beatsPerBar); break;
-    case 'Arpeggio': newNotes = humanizeTrack(generateArpeggio(params, chordProgression), params.style, 'Arpeggio', beatsPerBar); break;
-    case 'Drums': newNotes = humanizeTrack(generateDrumPattern(params), params.style, 'Drums', beatsPerBar); break;
-    default: newNotes = humanizeTrack(generateMelody(params, chordProgression), params.style, 'Melody', beatsPerBar);
+    case 'Bass': newNotes = humanizeTrack(generateBassLine(params, chordProgression), params.style, 'Bass', beatsPerBar, h); break;
+    case 'Harmony': newNotes = humanizeTrack(generatePadVoicings(params, chordProgression), params.style, 'Harmony', beatsPerBar, h); break;
+    case 'Arpeggio': newNotes = humanizeTrack(generateArpeggio(params, chordProgression), params.style, 'Arpeggio', beatsPerBar, h); break;
+    case 'Drums': newNotes = humanizeTrack(generateDrumPattern(params), params.style, 'Drums', beatsPerBar, h); break;
+    default: newNotes = humanizeTrack(generateMelody(params, chordProgression), params.style, 'Melody', beatsPerBar, h);
   }
 
   return { ...track, notes: newNotes };
