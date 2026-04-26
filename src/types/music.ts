@@ -57,7 +57,8 @@ export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'modal_jazz' | 'post_romantic';
+  | 'bossa_nova' | 'modal_jazz' | 'post_romantic'
+  | 'lo_fi' | 'gospel';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -78,10 +79,12 @@ export type InstrumentType =
   | 'piano' | 'strings' | 'bass' | 'pads'
   | 'bells' | 'brass' | 'woodwind' | 'drums'
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
-  | 'vibraphone' | 'celeste' | 'cello';
+  | 'vibraphone' | 'celeste' | 'cello'
+  | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
+  | 'clavinet' | 'tape_keys';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'phaser' | 'tremolo';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
   wet: number;
   params: Record<string, number>;
 }

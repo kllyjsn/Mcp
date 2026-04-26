@@ -13,64 +13,172 @@ const masterReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).toDestination();
 const masterCompressor = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(masterReverb);
 const masterLimiter = new Tone.Limiter(-1).connect(masterCompressor);
 
-function createInstrument(trackName: string): Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth {
-  switch (trackName) {
-    case 'Melody':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle8' },
-        envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.8 },
-        volume: -6,
-      });
-    case 'Countermelody':
-      return new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 2,
-        modulationIndex: 1.5,
-        oscillator: { type: 'sine' },
-        modulation: { type: 'triangle' },
-        envelope: { attack: 0.08, decay: 0.4, sustain: 0.5, release: 1.2 },
-        modulationEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.6, release: 0.8 },
-        volume: -14,
-      });
-    case 'Harmony':
-      return new Tone.PolySynth(Tone.AMSynth, {
-        harmonicity: 1.5,
-        oscillator: { type: 'sine4' },
-        modulation: { type: 'sine' },
-        envelope: { attack: 0.5, decay: 0.6, sustain: 0.7, release: 2.5 },
-        modulationEnvelope: { attack: 0.8, decay: 1, sustain: 0.5, release: 2 },
-        volume: -10,
-      });
-    case 'Bass':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sawtooth4' },
-        envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.4 },
-        volume: -8,
-      });
-    case 'Arpeggio':
-      return new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 3.01,
-        modulationIndex: 2,
-        oscillator: { type: 'sine' },
-        modulation: { type: 'sine' },
-        envelope: { attack: 0.005, decay: 0.3, sustain: 0.1, release: 1.5 },
-        modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 1 },
-        volume: -14,
-      });
-    case 'Drums':
-      return new Tone.MembraneSynth({
-        pitchDecay: 0.05,
-        octaves: 6,
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 },
-        volume: -6,
-      });
-    default:
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 0.8 },
-        volume: -8,
-      });
+type InstrumentKey = string;
+
+interface InstrumentDef {
+  create: () => Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth;
+}
+
+const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
+  piano: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle8' },
+      envelope: { attack: 0.008, decay: 0.4, sustain: 0.25, release: 1.2 },
+      volume: -6,
+    }),
+  },
+  electric_piano: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 3.01,
+      modulationIndex: 1.5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.6, sustain: 0.2, release: 1.8 },
+      modulation: { type: 'square' },
+      modulationEnvelope: { attack: 0.002, decay: 0.3, sustain: 0, release: 0.5 },
+      volume: -8,
+    }),
+  },
+  tape_keys: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2,
+      modulationIndex: 0.8,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.05, decay: 0.8, sustain: 0.3, release: 2.5 },
+      modulation: { type: 'triangle' },
+      modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 1 },
+      volume: -10,
+    }),
+  },
+  strings: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 20, count: 3 },
+      envelope: { attack: 0.5, decay: 0.4, sustain: 0.8, release: 2.5 },
+      volume: -12,
+    }),
+  },
+  woodwind: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2,
+      modulationIndex: 1.5,
+      oscillator: { type: 'sine' },
+      modulation: { type: 'triangle' },
+      envelope: { attack: 0.08, decay: 0.4, sustain: 0.5, release: 1.2 },
+      modulationEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.6, release: 0.8 },
+      volume: -14,
+    }),
+  },
+  cello: {
+    create: () => new Tone.PolySynth(Tone.AMSynth, {
+      harmonicity: 1.5,
+      oscillator: { type: 'fatsawtooth', spread: 15, count: 2 },
+      modulation: { type: 'sine' },
+      envelope: { attack: 0.3, decay: 0.5, sustain: 0.7, release: 2 },
+      modulationEnvelope: { attack: 0.5, decay: 0.8, sustain: 0.4, release: 1.5 },
+      volume: -10,
+    }),
+  },
+  celeste: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 6,
+      modulationIndex: 0.6,
+      oscillator: { type: 'sine' },
+      modulation: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 1, sustain: 0, release: 2.5 },
+      modulationEnvelope: { attack: 0.001, decay: 0.6, sustain: 0, release: 2 },
+      volume: -16,
+    }),
+  },
+  vibraphone: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 8,
+      modulationIndex: 0.4,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 1.2, sustain: 0, release: 2 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 1.5 },
+      volume: -14,
+    }),
+  },
+  nylon_guitar: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle4' },
+      envelope: { attack: 0.005, decay: 0.5, sustain: 0.1, release: 1.5 },
+      volume: -8,
+    }),
+  },
+  bass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 10, count: 2 },
+      envelope: { attack: 0.01, decay: 0.25, sustain: 0.5, release: 0.4 },
+      volume: -8,
+    }),
+  },
+  upright_bass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle4' },
+      envelope: { attack: 0.015, decay: 0.5, sustain: 0.3, release: 0.8 },
+      volume: -6,
+    }),
+  },
+  bells: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 5.07,
+      modulationIndex: 1,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0.05, release: 2 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 1.5 },
+      volume: -14,
+    }),
+  },
+  pads: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine4' },
+      envelope: { attack: 0.6, decay: 0.5, sustain: 0.7, release: 3 },
+      volume: -12,
+    }),
+  },
+  organ: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine8' },
+      envelope: { attack: 0.05, decay: 0.1, sustain: 0.9, release: 0.3 },
+      volume: -10,
+    }),
+  },
+  clavinet: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'square8' },
+      envelope: { attack: 0.002, decay: 0.2, sustain: 0.15, release: 0.3 },
+      volume: -10,
+    }),
+  },
+  synth_lead: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 30, count: 3 },
+      envelope: { attack: 0.02, decay: 0.3, sustain: 0.5, release: 0.8 },
+      volume: -8,
+    }),
+  },
+  drums_placeholder: {
+    create: () => new Tone.MembraneSynth({
+      pitchDecay: 0.05, octaves: 6,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 },
+      volume: -6,
+    }),
+  },
+};
+
+function createInstrument(trackName: string, instrumentType?: string): Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth {
+  if (trackName === 'Drums') {
+    return INSTRUMENT_DEFS.drums_placeholder.create();
   }
+
+  const key = instrumentType ?? trackName.toLowerCase();
+  const def = INSTRUMENT_DEFS[key];
+  if (def) return def.create();
+
+  return INSTRUMENT_DEFS.piano.create();
 }
 
 function createTrackEffects(track: Track): Tone.ToneAudioNode[] {
@@ -117,10 +225,17 @@ function createTrackEffects(track: Track): Tone.ToneAudioNode[] {
           high: effect.params.high ?? 0,
         }));
         break;
+      case 'distortion':
+        fxChain.push(new Tone.Distortion({
+          distortion: effect.params.amount ?? 0.4,
+          wet: effect.wet,
+        }));
+        break;
       case 'phaser':
         fxChain.push(new Tone.Phaser({
           frequency: effect.params.frequency ?? 0.5,
           octaves: effect.params.octaves ?? 3,
+          baseFrequency: effect.params.baseFrequency ?? 350,
           wet: effect.wet,
         }));
         break;
@@ -128,8 +243,15 @@ function createTrackEffects(track: Track): Tone.ToneAudioNode[] {
         fxChain.push(new Tone.Tremolo({
           frequency: effect.params.frequency ?? 4,
           depth: effect.params.depth ?? 0.5,
+          wet: effect.wet,
         }).start());
         break;
+      case 'bitcrusher': {
+        const bc = new Tone.BitCrusher(effect.params.bits ?? 8);
+        bc.wet.value = effect.wet;
+        fxChain.push(bc);
+        break;
+      }
     }
   }
 
@@ -162,7 +284,7 @@ export function buildComposition(composition: Composition): void {
   transport.timeSignature = composition.params.timeSignature;
 
   for (const track of composition.tracks) {
-    const instrument = createInstrument(track.name);
+    const instrument = createInstrument(track.name, track.instrument);
     const channel = new Tone.Channel({
       volume: Tone.gainToDb(track.volume),
       pan: track.pan,
@@ -369,7 +491,7 @@ export async function exportWav(composition: Composition): Promise<Blob> {
     for (const track of composition.tracks) {
       if (track.muted) continue;
 
-      const instrument = createInstrument(track.name);
+      const instrument = createInstrument(track.name, track.instrument);
       const channel = new Tone.Channel({
         volume: Tone.gainToDb(track.volume),
         pan: track.pan,
@@ -489,4 +611,23 @@ function bufferToWav(buffer: Tone.ToneAudioBuffer): Blob {
   }
 
   return new Blob([arrayBuffer], { type: 'audio/wav' });
+}
+
+let analyserNode: Tone.Analyser | null = null;
+let waveformNode: Tone.Analyser | null = null;
+
+export function getAnalyserNode(): Tone.Analyser {
+  if (!analyserNode) {
+    analyserNode = new Tone.Analyser('fft', 64);
+    masterLimiter.connect(analyserNode);
+  }
+  return analyserNode;
+}
+
+export function getWaveformNode(): Tone.Analyser {
+  if (!waveformNode) {
+    waveformNode = new Tone.Analyser('waveform', 128);
+    masterLimiter.connect(waveformNode);
+  }
+  return waveformNode;
 }

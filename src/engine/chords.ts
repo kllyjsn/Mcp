@@ -175,6 +175,16 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   // Electronic
   { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
   { name: 'EDM i-bVI-bIII-bVII', degrees: [0, 5, 2, 6], style: 'electronic' },
+
+  // Lo-fi
+  { name: 'Lo-fi ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'lo_fi' },
+  { name: 'Lo-fi I-iii-IV-iv', degrees: [0, 2, 3, 3], style: 'lo_fi' },
+  { name: 'Lo-fi vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'lo_fi' },
+
+  // Gospel
+  { name: 'Gospel I-IV-I-V', degrees: [0, 3, 0, 4], style: 'gospel' },
+  { name: 'Gospel I-iii-IV-V-I', degrees: [0, 2, 3, 4, 0], style: 'gospel' },
+  { name: 'Gospel IV-V-iii-vi', degrees: [3, 4, 2, 5], style: 'gospel' },
 ];
 
 function elevateQuality(quality: ChordQuality, complexity: number, style: string): ChordQuality {

@@ -1,6 +1,7 @@
 import { Play, Pause, Square, RotateCcw, Repeat, SkipBack, Download } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { motion } from 'framer-motion';
+import { SpectrumAnalyser } from './SpectrumAnalyser';
 
 export function TransportBar() {
   const {
@@ -78,7 +79,9 @@ export function TransportBar() {
         </span>
       </div>
 
-      <div className="flex-1" />
+      <div className="flex-1 flex items-center justify-center">
+        <SpectrumAnalyser />
+      </div>
 
       <div className="flex items-center gap-2">
         {composition && (
