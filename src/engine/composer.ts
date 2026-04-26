@@ -201,6 +201,7 @@ export function compose(params: CompositionParams): Composition {
     params.measures,
     params.style,
     params.harmonicComplexity,
+    params.timeSignature,
   );
 
   const sv = STYLE_VOICINGS[params.style];

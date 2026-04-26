@@ -697,7 +697,7 @@ function generateAfrobeatBass(
 
     // Afrobeat: driving, syncopated, repetitive bass line
     const patternLength = Math.min(4, chordDur);
-    for (let b = 0; b < patternLength; b += 0.5) {
+    for (let b = 0; b < patternLength; b += 0.25) {
       if (currentBeat + b >= totalBeats) break;
 
       if (b === 0) {
