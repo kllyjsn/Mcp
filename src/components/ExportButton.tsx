@@ -4,6 +4,7 @@ import {
   startRecording,
   stopRecording,
   initAudio,
+  disableLoop,
 } from '../engine/audio';
 import { Download, Circle } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export function ExportButton() {
       await initAudio();
 
       stopPlayback();
+      disableLoop();
       await startRecording();
       await togglePlay();
 

@@ -83,6 +83,7 @@ export const useStore = create<ComposerStore>((set, get) => ({
   },
 
   generate: async () => {
+    if (get().isExporting) return;
     set({ isGenerating: true });
     await initAudio();
 
