@@ -186,16 +186,18 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
 };
 
 export function compose(params: CompositionParams): Composition {
+  const beatsPerBar = params.timeSignature[0];
+
   const chords = generateChordProgression(
     params.key,
     params.scale,
     params.measures,
     params.style,
     params.harmonicComplexity,
+    beatsPerBar,
   );
 
   const sv = STYLE_VOICINGS[params.style];
-  const beatsPerBar = params.timeSignature[0];
 
   const melodyNotes = humanizeTrack(generateMelody(params, chords, [4, 6]), params.style, 'Melody', beatsPerBar);
   const countermelodyNotes = humanizeTrack(generateCountermelody(params, chords, melodyNotes), params.style, 'Countermelody', beatsPerBar);

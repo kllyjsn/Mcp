@@ -10,16 +10,17 @@ const TREBLE_TOP = STAFF_TOP_MARGIN;
 const BASS_TOP = TREBLE_TOP + STAFF_LINE_SPACING * 8 + 30;
 const SYSTEM_HEIGHT = BASS_TOP + STAFF_LINE_SPACING * 8 + 40;
 
+function midiToDiatonicPos(midi: number): number {
+  const chromaticToDiatonic = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+  return Math.floor(midi / 12) * 7 + chromaticToDiatonic[midi % 12];
+}
+
 function midiToStaffY(midi: number, clef: 'treble' | 'bass'): number {
   const ref = clef === 'treble' ? { midi: 71, line: 2 } : { midi: 50, line: 2 };
   const top = clef === 'treble' ? TREBLE_TOP : BASS_TOP;
-  const semitonesToLine = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4, 4.5, 5, 5.5, 6, 6.5];
 
-  const octaveDiff = Math.floor((midi - ref.midi) / 12);
-  const noteDiff = (midi - ref.midi) % 12;
-  const idx = noteDiff < 0 ? noteDiff + 12 : noteDiff;
-
-  const linePos = ref.line - octaveDiff * 3.5 - (semitonesToLine[idx] ?? 0);
+  const diatonicDiff = midiToDiatonicPos(midi) - midiToDiatonicPos(ref.midi);
+  const linePos = ref.line - diatonicDiff * 0.5;
   return top + linePos * STAFF_LINE_SPACING;
 }
 

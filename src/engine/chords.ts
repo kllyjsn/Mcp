@@ -223,6 +223,7 @@ export function generateChordProgression(
   measures: number,
   style: string,
   complexity: number,
+  beatsPerMeasure: number = 4,
 ): Chord[] {
   const diatonicChords = getDiatonicChords(scale);
 
@@ -234,7 +235,7 @@ export function generateChordProgression(
   const chords: Chord[] = [];
   let prevVoicing = buildChordVoicing(key, 'major', 3);
   let currentBeat = 0;
-  const beatsPerMeasure = 4;
+
 
   for (let measure = 0; measure < measures; measure++) {
     const degreeIndex = measure % template.degrees.length;
