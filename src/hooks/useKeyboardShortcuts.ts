@@ -11,8 +11,8 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Block transport shortcuts during export
-      if (isExporting && (e.code === 'Space' || e.code === 'Escape')) {
+      // Block all shortcuts during export to prevent audio graph destruction
+      if (isExporting) {
         e.preventDefault();
         return;
       }
