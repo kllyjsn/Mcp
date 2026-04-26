@@ -7,6 +7,7 @@ let initialized = false;
 const instruments: Map<string, Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth> = new Map();
 const channels: Map<string, Tone.Channel> = new Map();
 const effects: Map<string, Tone.ToneAudioNode[]> = new Map();
+const drumSynthInstances: (Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth)[] = [];
 
 const masterReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).toDestination();
 const masterCompressor = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(masterReverb);
@@ -115,9 +116,11 @@ export function disposeAll(): void {
   instruments.forEach(inst => inst.dispose());
   channels.forEach(ch => ch.dispose());
   effects.forEach(fxArr => fxArr.forEach(fx => fx.dispose()));
+  drumSynthInstances.forEach(ds => ds.dispose());
   instruments.clear();
   channels.clear();
   effects.clear();
+  drumSynthInstances.length = 0;
 }
 
 export function buildComposition(composition: Composition): void {
@@ -168,6 +171,8 @@ function scheduleTrackNotes(
       snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0 }, volume: -10 }),
       hihat: new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5, volume: -16 }),
     };
+
+    drumSynthInstances.push(drumSynths.kick, drumSynths.snare, drumSynths.hihat);
 
     const ch = channels.get(track.id);
     if (ch) {
@@ -249,15 +254,17 @@ export function setTrackMute(trackId: string, muted: boolean): void {
   if (ch) ch.mute = muted;
 }
 
-export function setTrackSolo(trackId: string, solo: boolean, allTrackIds: string[]): void {
-  const anysoloed = solo;
-  for (const id of allTrackIds) {
-    const ch = channels.get(id);
+export function setTrackSolo(
+  allTrackStates: { id: string; solo: boolean; muted: boolean }[],
+): void {
+  const anySoloed = allTrackStates.some(t => t.solo);
+  for (const t of allTrackStates) {
+    const ch = channels.get(t.id);
     if (!ch) continue;
-    if (anysoloed) {
-      ch.mute = id !== trackId;
+    if (anySoloed) {
+      ch.mute = !t.solo;
     } else {
-      ch.mute = false;
+      ch.mute = t.muted;
     }
   }
 }

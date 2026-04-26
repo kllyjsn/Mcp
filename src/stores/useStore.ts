@@ -193,15 +193,16 @@ export const useStore = create<ComposerStore>((set, get) => ({
       if (!track) return {};
 
       const newSolo = !track.solo;
-      const allIds = state.composition.tracks.map(t => t.id);
-      setTrackSolo(trackId, newSolo, allIds);
+      const updatedTracks = state.composition.tracks.map(t =>
+        t.id === trackId ? { ...t, solo: newSolo } : t
+      );
+
+      setTrackSolo(updatedTracks.map(t => ({ id: t.id, solo: t.solo, muted: t.muted })));
 
       return {
         composition: {
           ...state.composition,
-          tracks: state.composition.tracks.map(t =>
-            t.id === trackId ? { ...t, solo: newSolo } : t
-          ),
+          tracks: updatedTracks,
         },
       };
     });
