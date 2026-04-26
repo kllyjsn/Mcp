@@ -164,23 +164,56 @@ export function generateChordProgression(
 
     const voicing = voiceLeadChord(prevVoicing, chordRoot, quality);
 
-    const chordsPerMeasure = complexity >= 7 && Math.random() > 0.5 ? 2 : 1;
-    const duration = beatsPerMeasure / chordsPerMeasure;
+    const splitMeasure = complexity >= 7 && Math.random() > 0.5;
 
-    for (let c = 0; c < chordsPerMeasure; c++) {
+    if (splitMeasure) {
+      const halfDuration = beatsPerMeasure / 2;
+
       chords.push({
         root: chordRoot,
         quality,
         inversion: 0,
         voicing,
         romanNumeral: diatonic.roman,
-        duration,
+        duration: halfDuration,
         startBeat: currentBeat,
       });
-      currentBeat += duration;
-    }
+      currentBeat += halfDuration;
 
-    prevVoicing = voicing;
+      // passing chord: use the next measure's target as a secondary dominant approach
+      const nextDegreeIndex = (measure + 1) % template.degrees.length;
+      const nextDegree = template.degrees[nextDegreeIndex];
+      const passingDegree = (nextDegree + 4) % 7; // dominant approach
+      const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
+      const passingQuality: ChordQuality = complexity >= 5 ? 'dominant7' : 'major';
+      const passingRootIndex = (NOTE_NAMES.indexOf(key) + (SCALE_INTERVALS[scale]?.[passingDegree] ?? passingDegree * 2)) % 12;
+      const passingRoot = NOTE_NAMES[passingRootIndex];
+      const passingVoicing = voiceLeadChord(voicing, passingRoot, passingQuality);
+
+      chords.push({
+        root: passingRoot,
+        quality: passingQuality,
+        inversion: 0,
+        voicing: passingVoicing,
+        romanNumeral: passingDiatonic.roman,
+        duration: halfDuration,
+        startBeat: currentBeat,
+      });
+      currentBeat += halfDuration;
+      prevVoicing = passingVoicing;
+    } else {
+      chords.push({
+        root: chordRoot,
+        quality,
+        inversion: 0,
+        voicing,
+        romanNumeral: diatonic.roman,
+        duration: beatsPerMeasure,
+        startBeat: currentBeat,
+      });
+      currentBeat += beatsPerMeasure;
+      prevVoicing = voicing;
+    }
   }
 
   return chords;

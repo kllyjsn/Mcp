@@ -204,7 +204,18 @@ function scheduleTrackNotes(
         transport.schedule((t) => {
           drumSynths.snare.triggerAttackRelease('8n', t, vel);
         }, time);
+      } else if (note.pitch === 49 || note.pitch === 51) {
+        // crash / ride — longer decay, full velocity
+        transport.schedule((t) => {
+          drumSynths.hihat.triggerAttackRelease('4n', t, vel * 0.7);
+        }, time);
+      } else if (note.pitch === 46) {
+        // open hihat — medium decay
+        transport.schedule((t) => {
+          drumSynths.hihat.triggerAttackRelease('8n', t, vel * 0.5);
+        }, time);
       } else {
+        // closed hihat (42) and fallback
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('32n', t, vel * 0.3);
         }, time);
