@@ -156,6 +156,21 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
   { name: 'Dark i-bVI-bVII-i', degrees: [0, 5, 6, 0], style: 'electronic' },
   { name: 'House IV-V-vi-IV', degrees: [3, 4, 5, 3], style: 'electronic' },
+
+  // Bossa Nova
+  { name: 'Bossa I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'bossa_nova' },
+  { name: 'Girl from Ipanema I-II-ii-bV', degrees: [0, 1, 1, 4], style: 'bossa_nova' },
+  { name: 'Bossa I-IV-iii-vi', degrees: [0, 3, 2, 5], style: 'bossa_nova' },
+
+  // Lo-Fi
+  { name: 'Lo-Fi ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'lo_fi' },
+  { name: 'Lo-Fi IV-iii-ii-I', degrees: [3, 2, 1, 0], style: 'lo_fi' },
+  { name: 'Chill I-iii-IV-iv', degrees: [0, 2, 3, 3], style: 'lo_fi' },
+
+  // Gospel
+  { name: 'Gospel I-IV-I-V', degrees: [0, 3, 0, 4], style: 'gospel' },
+  { name: 'Gospel I-iii-IV-V', degrees: [0, 2, 3, 4], style: 'gospel' },
+  { name: 'Shout IV-V-vi-IV-V-I', degrees: [3, 4, 5, 3, 4, 0], style: 'gospel' },
 ];
 
 export function generateChordProgression(

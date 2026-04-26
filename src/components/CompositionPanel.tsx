@@ -1,7 +1,7 @@
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles } from 'lucide-react';
+import { Music, Waves, Zap, Heart, Sparkles, Disc3, Coffee, Church } from 'lucide-react';
 import { PresetsPanel } from './PresetsPanel';
 
 const SCALES: { value: ScaleType; label: string }[] = [
@@ -29,6 +29,9 @@ const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] =
   { value: 'minimalist', label: 'Minimalist', icon: Zap },
   { value: 'cinematic', label: 'Cinematic', icon: Music },
   { value: 'electronic', label: 'Electronic', icon: Zap },
+  { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
+  { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
+  { value: 'gospel', label: 'Gospel', icon: Church },
 ];
 
 const DYNAMICS: { value: DynamicCurve; label: string }[] = [

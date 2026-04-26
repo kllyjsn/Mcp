@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../stores/useStore';
-import { getAnalyser } from '../engine/audio';
+import { getWaveformNode } from '../engine/audio';
 
 export function Visualizer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,7 +13,7 @@ export function Visualizer() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const analyser = getAnalyser();
+    const analyser = getWaveformNode();
 
     const draw = () => {
       const width = canvas.width / window.devicePixelRatio;
