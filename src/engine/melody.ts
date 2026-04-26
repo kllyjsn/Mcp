@@ -251,7 +251,7 @@ export function generateBassLine(
   const totalBeats = params.measures * params.timeSignature[0];
   let currentBeat = 0;
 
-  const isGrooveStyle = ['jazz', 'neo_soul', 'electronic'].includes(params.style);
+  const isGrooveStyle = ['jazz', 'neo_soul', 'electronic', 'bossa_nova', 'lo_fi', 'gospel'].includes(params.style);
 
   while (currentBeat < totalBeats) {
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
