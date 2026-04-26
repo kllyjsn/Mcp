@@ -103,6 +103,7 @@ export const useStore = create<ComposerStore>((set, get) => ({
   },
 
   regenerateTrack: (trackIndex: number) => {
+    if (get().isExporting) return;
     const { composition } = get();
     if (!composition) return;
 

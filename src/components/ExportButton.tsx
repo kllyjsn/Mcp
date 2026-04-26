@@ -20,7 +20,7 @@ export function ExportButton() {
   }, []);
 
   const handleExport = async () => {
-    if (!composition || isExporting) return;
+    if (!composition || useStore.getState().isExporting) return;
     setExporting(true);
 
     try {
