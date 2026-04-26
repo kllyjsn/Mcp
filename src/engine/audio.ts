@@ -480,13 +480,14 @@ export async function exportWav(composition: Composition): Promise<Blob> {
   const bpm = composition.params.tempo;
   const durationSeconds = (totalBeats / bpm) * 60 + 2;
 
-  const buffer = await Tone.Offline(({ transport }) => {
+  const buffer = await Tone.Offline(async ({ transport }) => {
     transport.bpm.value = bpm;
     transport.timeSignature = composition.params.timeSignature;
 
     const offlineLimiter = new Tone.Limiter(-1).toDestination();
     const offlineComp = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(offlineLimiter);
     const offlineReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).connect(offlineComp);
+    await offlineReverb.ready;
 
     for (const track of composition.tracks) {
       if (track.muted) continue;
@@ -498,6 +499,9 @@ export async function exportWav(composition: Composition): Promise<Blob> {
       }).connect(offlineReverb);
 
       const fxChain = createTrackEffects(track);
+      for (const fx of fxChain) {
+        if (fx instanceof Tone.Reverb) await (fx as Tone.Reverb).ready;
+      }
       if (fxChain.length > 0) {
         instrument.connect(fxChain[0]);
         for (let i = 0; i < fxChain.length - 1; i++) {
