@@ -10,7 +10,8 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'minor11' | 'major6' | 'minor6';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -18,6 +19,8 @@ export interface Note {
   duration: number;    // in beats
   startBeat: number;
   noteName?: string;
+  isGraceNote?: boolean;
+  ornament?: 'mordent' | 'turn' | 'appoggiatura' | 'trill';
 }
 
 export interface Chord {
@@ -54,7 +57,8 @@ export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'lo_fi' | 'gospel';
+  | 'bossa_nova' | 'lo_fi' | 'gospel'
+  | 'late_night' | 'afrobeat' | 'contemporary_rnb';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -76,10 +80,13 @@ export type InstrumentType =
   | 'bells' | 'brass' | 'woodwind' | 'drums'
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
-  | 'vibraphone' | 'clavinet' | 'tape_keys';
+  | 'vibraphone' | 'clavinet' | 'tape_keys'
+  | 'warm_rhodes' | 'wurlitzer' | 'marimba'
+  | 'analog_pad' | 'fingerstyle_guitar' | 'kalimba'
+  | 'fretless_bass' | 'muted_trumpet';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'widener' | 'saturator';
   wet: number;
   params: Record<string, number>;
 }
@@ -99,4 +106,10 @@ export interface TransportState {
   loop: boolean;
   loopStart: number;
   loopEnd: number;
+}
+
+export interface CompositionPreset {
+  name: string;
+  description: string;
+  params: Partial<CompositionParams>;
 }

@@ -1,7 +1,8 @@
-import { Play, Pause, Square, RotateCcw, Repeat, SkipBack } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, Repeat, SkipBack, Download } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { motion } from 'framer-motion';
 import { SpectrumAnalyser } from './SpectrumAnalyser';
+import { downloadMidi } from '../engine/midi';
 
 export function TransportBar() {
   const {
@@ -90,6 +91,17 @@ export function TransportBar() {
       </div>
 
       <div className="h-6 w-px bg-zinc-800 mx-1" />
+
+      {composition && (
+        <button
+          onClick={() => downloadMidi(composition)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800/60 hover:bg-zinc-700/60 text-zinc-300 rounded-lg text-xs font-medium transition-all border border-zinc-700/30 hover:border-amber-600/20"
+          title="Export MIDI"
+        >
+          <Download size={14} />
+          <span>MIDI</span>
+        </button>
+      )}
 
       <motion.button
         whileTap={{ scale: 0.97 }}
