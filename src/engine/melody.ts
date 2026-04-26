@@ -636,27 +636,33 @@ function generateBossaDrums(params: CompositionParams): Note[] {
   const SNARE = 38;
   const HIHAT_CLOSED = 42;
   const RIDE = 51;
+  const bpm = params.timeSignature[0];
 
+  const push = (pitch: number, vel: number, dur: number, beat: number) => {
+    if (beat < bpm) notes.push({ pitch, velocity: vel, duration: dur, startBeat: base + beat });
+  };
+
+  let base = 0;
   for (let measure = 0; measure < params.measures; measure++) {
-    const base = measure * params.timeSignature[0];
+    base = measure * bpm;
 
-    notes.push({ pitch: KICK, velocity: 80, duration: 0.3, startBeat: base });
-    notes.push({ pitch: KICK, velocity: 65, duration: 0.25, startBeat: base + 1.5 });
-    notes.push({ pitch: KICK, velocity: 70, duration: 0.3, startBeat: base + 3 });
+    push(KICK, 80, 0.3, 0);
+    push(KICK, 65, 0.25, 1.5);
+    push(KICK, 70, 0.3, 3);
 
-    notes.push({ pitch: SNARE, velocity: 45, duration: 0.15, startBeat: base + 0.5 });
-    notes.push({ pitch: SNARE, velocity: 55, duration: 0.2, startBeat: base + 1 });
-    notes.push({ pitch: SNARE, velocity: 45, duration: 0.15, startBeat: base + 2.5 });
-    notes.push({ pitch: SNARE, velocity: 55, duration: 0.2, startBeat: base + 3 });
+    push(SNARE, 45, 0.15, 0.5);
+    push(SNARE, 55, 0.2, 1);
+    push(SNARE, 45, 0.15, 2.5);
+    push(SNARE, 55, 0.2, 3);
 
-    for (let eighth = 0; eighth < params.timeSignature[0] * 2; eighth++) {
-      const beat = base + eighth * 0.5;
-      if (beat < base + params.timeSignature[0]) {
+    for (let eighth = 0; eighth < bpm * 2; eighth++) {
+      const beat = eighth * 0.5;
+      if (beat < bpm) {
         notes.push({
           pitch: Math.random() > 0.3 ? HIHAT_CLOSED : RIDE,
           velocity: eighth % 2 === 0 ? 55 : 40,
           duration: 0.15,
-          startBeat: beat,
+          startBeat: base + beat,
         });
       }
     }

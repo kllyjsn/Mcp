@@ -247,7 +247,7 @@ export const useStore = create<ComposerStore>((set, get) => ({
       a.href = url;
       a.download = `${composition.name.replace(/\s+/g, '_')}.wav`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     } finally {
       set({ isExporting: false });
     }
