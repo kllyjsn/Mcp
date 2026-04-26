@@ -2,6 +2,7 @@ import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
 import { Music, Waves, Zap, Heart, Sparkles } from 'lucide-react';
+import { PresetsPanel } from './PresetsPanel';
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -186,6 +187,10 @@ export function CompositionPanel() {
             onChange={v => setParam('expressiveness', v)}
           />
         </div>
+
+        <div className="h-px bg-zinc-800/50" />
+
+        <PresetsPanel />
       </div>
     </div>
   );

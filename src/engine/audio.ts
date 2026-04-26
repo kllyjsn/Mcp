@@ -1,59 +1,113 @@
 import * as Tone from 'tone';
-import type { Composition, Track } from '../types/music';
+import type { Composition, Track, CompositionStyle } from '../types/music';
 import { midiNoteToString } from './scales';
 
 let initialized = false;
 
 const instruments: Map<string, Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth> = new Map();
 const channels: Map<string, Tone.Channel> = new Map();
-const effects: Map<string, Tone.ToneAudioNode[]> = new Map();
+const effectChains: Map<string, Tone.ToneAudioNode[]> = new Map();
 const drumSynthInstances: (Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth)[] = [];
 
 const masterReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).toDestination();
 const masterCompressor = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(masterReverb);
 const masterLimiter = new Tone.Limiter(-1).connect(masterCompressor);
 
-function createInstrument(trackName: string): Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth {
+// Analyser node for real-time visualization
+const analyserNode = new Tone.Analyser('waveform', 256);
+masterLimiter.connect(analyserNode);
+
+// Recorder for WAV export
+let recorder: Tone.Recorder | null = null;
+
+export function getAnalyser(): Tone.Analyser {
+  return analyserNode;
+}
+
+// Style-specific synth configurations for richer, more expressive sound
+interface SynthConfig {
+  oscillator: { type: string };
+  envelope: { attack: number; decay: number; sustain: number; release: number };
+  volume: number;
+}
+
+const MELODY_PATCHES: Record<string, SynthConfig> = {
+  classical:     { oscillator: { type: 'triangle8' }, envelope: { attack: 0.01, decay: 0.25, sustain: 0.5, release: 0.6 }, volume: -6 },
+  romantic:      { oscillator: { type: 'triangle16' }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.6, release: 1.2 }, volume: -6 },
+  impressionist: { oscillator: { type: 'sine8' }, envelope: { attack: 0.08, decay: 0.5, sustain: 0.4, release: 1.5 }, volume: -8 },
+  jazz:          { oscillator: { type: 'triangle4' }, envelope: { attack: 0.005, decay: 0.15, sustain: 0.3, release: 0.5 }, volume: -5 },
+  neo_soul:      { oscillator: { type: 'sine16' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.8 }, volume: -6 },
+  ambient:       { oscillator: { type: 'sine8' }, envelope: { attack: 0.2, decay: 0.8, sustain: 0.6, release: 2.5 }, volume: -10 },
+  minimalist:    { oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.4, release: 0.6 }, volume: -8 },
+  cinematic:     { oscillator: { type: 'triangle16' }, envelope: { attack: 0.05, decay: 0.5, sustain: 0.6, release: 1.5 }, volume: -6 },
+  electronic:    { oscillator: { type: 'sawtooth8' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.3, release: 0.4 }, volume: -6 },
+};
+
+const HARMONY_PATCHES: Record<string, SynthConfig> = {
+  classical:     { oscillator: { type: 'sine4' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.7, release: 2 }, volume: -10 },
+  romantic:      { oscillator: { type: 'sine8' }, envelope: { attack: 0.5, decay: 0.6, sustain: 0.8, release: 2.5 }, volume: -10 },
+  impressionist: { oscillator: { type: 'sine16' }, envelope: { attack: 0.6, decay: 0.8, sustain: 0.6, release: 3 }, volume: -12 },
+  jazz:          { oscillator: { type: 'triangle4' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.8 }, volume: -10 },
+  neo_soul:      { oscillator: { type: 'sine8' }, envelope: { attack: 0.15, decay: 0.4, sustain: 0.6, release: 1.5 }, volume: -10 },
+  ambient:       { oscillator: { type: 'sine16' }, envelope: { attack: 1, decay: 1, sustain: 0.8, release: 4 }, volume: -14 },
+  minimalist:    { oscillator: { type: 'sine4' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.7, release: 2 }, volume: -10 },
+  cinematic:     { oscillator: { type: 'sine8' }, envelope: { attack: 0.5, decay: 0.6, sustain: 0.8, release: 3 }, volume: -10 },
+  electronic:    { oscillator: { type: 'square4' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 1 }, volume: -12 },
+};
+
+const BASS_PATCHES: Record<string, SynthConfig> = {
+  classical:     { oscillator: { type: 'triangle8' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.5, release: 0.5 }, volume: -6 },
+  romantic:      { oscillator: { type: 'triangle8' }, envelope: { attack: 0.03, decay: 0.4, sustain: 0.6, release: 0.8 }, volume: -6 },
+  impressionist: { oscillator: { type: 'sine8' }, envelope: { attack: 0.05, decay: 0.5, sustain: 0.5, release: 1 }, volume: -8 },
+  jazz:          { oscillator: { type: 'triangle4' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0.4, release: 0.3 }, volume: -4 },
+  neo_soul:      { oscillator: { type: 'sawtooth4' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.4 }, volume: -6 },
+  ambient:       { oscillator: { type: 'sine8' }, envelope: { attack: 0.1, decay: 0.5, sustain: 0.6, release: 1.5 }, volume: -8 },
+  minimalist:    { oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.4 }, volume: -6 },
+  cinematic:     { oscillator: { type: 'sawtooth8' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.6, release: 0.8 }, volume: -6 },
+  electronic:    { oscillator: { type: 'sawtooth8' }, envelope: { attack: 0.005, decay: 0.15, sustain: 0.4, release: 0.3 }, volume: -5 },
+};
+
+const ARPEGGIO_PATCHES: Record<string, SynthConfig> = {
+  classical:     { oscillator: { type: 'sine8' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0.2, release: 1 }, volume: -12 },
+  romantic:      { oscillator: { type: 'sine16' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 1.5 }, volume: -12 },
+  impressionist: { oscillator: { type: 'sine16' }, envelope: { attack: 0.03, decay: 0.3, sustain: 0.2, release: 2 }, volume: -14 },
+  jazz:          { oscillator: { type: 'triangle4' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.15, release: 0.5 }, volume: -12 },
+  neo_soul:      { oscillator: { type: 'sine8' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.8 }, volume: -12 },
+  ambient:       { oscillator: { type: 'sine16' }, envelope: { attack: 0.08, decay: 0.5, sustain: 0.3, release: 3 }, volume: -16 },
+  minimalist:    { oscillator: { type: 'sine4' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0.2, release: 1 }, volume: -12 },
+  cinematic:     { oscillator: { type: 'sine8' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 1.5 }, volume: -12 },
+  electronic:    { oscillator: { type: 'square8' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.15, release: 0.6 }, volume: -12 },
+};
+
+function getPatch(trackName: string, style: CompositionStyle): SynthConfig {
+  const defaultPatch: SynthConfig = { oscillator: { type: 'triangle' }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 0.8 }, volume: -8 };
   switch (trackName) {
-    case 'Melody':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle8' },
-        envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.8 },
-        volume: -6,
-      });
-    case 'Harmony':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine4' },
-        envelope: { attack: 0.4, decay: 0.5, sustain: 0.7, release: 2 },
-        volume: -10,
-      });
-    case 'Bass':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sawtooth4' },
-        envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.4 },
-        volume: -8,
-      });
-    case 'Arpeggio':
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine8' },
-        envelope: { attack: 0.01, decay: 0.15, sustain: 0.2, release: 1 },
-        volume: -12,
-      });
-    case 'Drums':
-      return new Tone.MembraneSynth({
-        pitchDecay: 0.05,
-        octaves: 6,
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 },
-        volume: -6,
-      });
-    default:
-      return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 0.8 },
-        volume: -8,
-      });
+    case 'Melody': return MELODY_PATCHES[style] ?? defaultPatch;
+    case 'Harmony': return HARMONY_PATCHES[style] ?? defaultPatch;
+    case 'Bass': return BASS_PATCHES[style] ?? defaultPatch;
+    case 'Arpeggio': return ARPEGGIO_PATCHES[style] ?? defaultPatch;
+    default: return defaultPatch;
   }
+}
+
+function createInstrument(trackName: string, style: CompositionStyle): Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth {
+  if (trackName === 'Drums') {
+    return new Tone.MembraneSynth({
+      pitchDecay: 0.05,
+      octaves: 6,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 },
+      volume: -6,
+    });
+  }
+
+  const patch = getPatch(trackName, style);
+  const synthOptions: Tone.SynthOptions = {
+    oscillator: { type: patch.oscillator.type },
+    envelope: patch.envelope,
+    volume: patch.volume,
+  } as Tone.SynthOptions;
+  return new Tone.PolySynth(Tone.Synth, synthOptions);
 }
 
 function createTrackEffects(track: Track): Tone.ToneAudioNode[] {
@@ -115,11 +169,11 @@ export async function initAudio(): Promise<void> {
 export function disposeAll(): void {
   instruments.forEach(inst => inst.dispose());
   channels.forEach(ch => ch.dispose());
-  effects.forEach(fxArr => fxArr.forEach(fx => fx.dispose()));
+  effectChains.forEach(fxArr => fxArr.forEach(fx => fx.dispose()));
   drumSynthInstances.forEach(ds => ds.dispose());
   instruments.clear();
   channels.clear();
-  effects.clear();
+  effectChains.clear();
   drumSynthInstances.length = 0;
 }
 
@@ -132,7 +186,7 @@ export function buildComposition(composition: Composition): void {
   transport.timeSignature = composition.params.timeSignature;
 
   for (const track of composition.tracks) {
-    const instrument = createInstrument(track.name);
+    const instrument = createInstrument(track.name, composition.params.style);
     const channel = new Tone.Channel({
       volume: Tone.gainToDb(track.volume),
       pan: track.pan,
@@ -153,7 +207,7 @@ export function buildComposition(composition: Composition): void {
 
     instruments.set(track.id, instrument);
     channels.set(track.id, channel);
-    effects.set(track.id, fxChain);
+    effectChains.set(track.id, fxChain);
 
     scheduleTrackNotes(track, instrument, fxChain, channel);
   }
@@ -205,17 +259,14 @@ function scheduleTrackNotes(
           drumSynths.snare.triggerAttackRelease('8n', t, vel);
         }, time);
       } else if (note.pitch === 49 || note.pitch === 51) {
-        // crash / ride — longer decay, full velocity
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('4n', t, vel * 0.7);
         }, time);
       } else if (note.pitch === 46) {
-        // open hihat — medium decay
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('8n', t, vel * 0.5);
         }, time);
       } else {
-        // closed hihat (42) and fallback
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('32n', t, vel * 0.3);
         }, time);
@@ -311,4 +362,27 @@ export function setLoop(start: number, end: number): void {
 
 export function disableLoop(): void {
   Tone.getTransport().loop = false;
+}
+
+// WAV Export
+export async function startRecording(): Promise<void> {
+  if (recorder) {
+    try { recorder.dispose(); } catch { /* ignore */ }
+  }
+  recorder = new Tone.Recorder();
+  Tone.getDestination().connect(recorder);
+  recorder.start();
+}
+
+export async function stopRecording(): Promise<Blob | null> {
+  if (!recorder) return null;
+  const blob = await recorder.stop();
+  Tone.getDestination().disconnect(recorder);
+  recorder.dispose();
+  recorder = null;
+  return blob;
+}
+
+export function isRecording(): boolean {
+  return recorder !== null && recorder.state === 'started';
 }

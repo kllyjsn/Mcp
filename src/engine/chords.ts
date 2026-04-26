@@ -108,20 +108,54 @@ interface ProgressionTemplate {
 }
 
 const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
+  // Classical
   { name: 'Classical I-IV-V-I', degrees: [0, 3, 4, 0], style: 'classical' },
   { name: 'Circle of Fifths', degrees: [0, 3, 6, 2, 5, 1, 4, 0], style: 'classical' },
-  { name: 'Romantic I-vi-IV-V', degrees: [0, 5, 3, 4], style: 'romantic' },
-  { name: 'Jazz ii-V-I', degrees: [1, 4, 0], style: 'jazz' },
-  { name: 'Jazz I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'jazz' },
-  { name: 'Neo Soul I-III-vi-IV', degrees: [0, 2, 5, 3], style: 'neo_soul' },
-  { name: 'Impressionist I-bVII-IV', degrees: [0, 6, 3], style: 'impressionist' },
-  { name: 'Cinematic i-VI-III-VII', degrees: [0, 5, 2, 6], style: 'cinematic' },
-  { name: 'Ambient I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'ambient' },
-  { name: 'Minimalist I-II', degrees: [0, 1], style: 'minimalist' },
-  { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
   { name: 'Phrygian i-bII-bVII-i', degrees: [0, 1, 6, 0], style: 'classical' },
   { name: 'Plagal IV-I', degrees: [3, 0], style: 'classical' },
+  { name: 'Passacaglia i-VII-VI-V', degrees: [0, 6, 5, 4], style: 'classical' },
+
+  // Romantic
+  { name: 'Romantic I-vi-IV-V', degrees: [0, 5, 3, 4], style: 'romantic' },
   { name: 'Descending Bass I-V/7-vi-IV', degrees: [0, 4, 5, 3], style: 'romantic' },
+  { name: 'Romantic I-iii-vi-IV-V', degrees: [0, 2, 5, 3, 4], style: 'romantic' },
+
+  // Jazz (extended with Coltrane-influenced patterns)
+  { name: 'Jazz ii-V-I', degrees: [1, 4, 0], style: 'jazz' },
+  { name: 'Jazz I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'jazz' },
+  { name: 'Rhythm Changes I-vi-ii-V-iii-VI-ii-V', degrees: [0, 5, 1, 4, 2, 5, 1, 4], style: 'jazz' },
+  { name: 'Backdoor ii-bVII-I', degrees: [1, 6, 0], style: 'jazz' },
+  { name: 'Coltrane I-III-V (chromatic thirds)', degrees: [0, 2, 4, 0], style: 'jazz' },
+
+  // Neo Soul
+  { name: 'Neo Soul I-III-vi-IV', degrees: [0, 2, 5, 3], style: 'neo_soul' },
+  { name: 'Neo Soul ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'neo_soul' },
+  { name: 'Erykah IV-iii-ii-I', degrees: [3, 2, 1, 0], style: 'neo_soul' },
+
+  // Impressionist (Debussy/Ravel-flavored modal wandering)
+  { name: 'Impressionist I-bVII-IV', degrees: [0, 6, 3], style: 'impressionist' },
+  { name: 'Impressionist I-bIII-bVI-bII', degrees: [0, 2, 5, 1], style: 'impressionist' },
+  { name: 'Planing I-II-III (parallel motion)', degrees: [0, 1, 2], style: 'impressionist' },
+
+  // Cinematic
+  { name: 'Cinematic i-VI-III-VII', degrees: [0, 5, 2, 6], style: 'cinematic' },
+  { name: 'Epic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'cinematic' },
+  { name: 'Desolation i-bVI-bIII-bVII', degrees: [0, 5, 2, 6], style: 'cinematic' },
+
+  // Ambient
+  { name: 'Ambient I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'ambient' },
+  { name: 'Ambient I-iii-IV-I', degrees: [0, 2, 3, 0], style: 'ambient' },
+  { name: 'Floating vi-IV-I', degrees: [5, 3, 0], style: 'ambient' },
+
+  // Minimalist
+  { name: 'Minimalist I-II', degrees: [0, 1], style: 'minimalist' },
+  { name: 'Glass I-IV-V-IV', degrees: [0, 3, 4, 3], style: 'minimalist' },
+  { name: 'Reich I-V', degrees: [0, 4], style: 'minimalist' },
+
+  // Electronic
+  { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
+  { name: 'Dark i-bVI-bVII-i', degrees: [0, 5, 6, 0], style: 'electronic' },
+  { name: 'House IV-V-vi-IV', degrees: [3, 4, 5, 3], style: 'electronic' },
 ];
 
 export function generateChordProgression(
@@ -149,14 +183,22 @@ export function generateChordProgression(
     const diatonic = diatonicChords[degree % diatonicChords.length];
 
     let quality = diatonic.quality;
-    if (complexity >= 5) {
+    // Extend chord qualities based on complexity
+    if (complexity >= 4) {
       if (quality === 'major') quality = 'major7';
       else if (quality === 'minor') quality = 'minor7';
-      else if (quality === 'dominant7') quality = 'dominant7';
     }
-    if (complexity >= 8 && Math.random() > 0.6) {
+    if (complexity >= 7 && Math.random() > 0.5) {
       if (quality === 'major7') quality = 'major9';
       else if (quality === 'minor7') quality = 'minor9';
+    }
+    // Sus chords for color at high complexity
+    if (complexity >= 6 && Math.random() > 0.8) {
+      if (quality === 'major' || quality === 'major7') quality = Math.random() > 0.5 ? 'sus4' : 'sus2';
+    }
+    // Secondary dominant: V/V approach at high complexity
+    if (complexity >= 8 && degree === 1 && Math.random() > 0.5) {
+      quality = 'dominant7';
     }
 
     const scaleIntervals = SCALE_INTERVALS[scale];

@@ -5,7 +5,10 @@ import { ArrangementView } from './components/ArrangementView';
 import { MixerView } from './components/MixerView';
 import { PianoRollView } from './components/PianoRollView';
 import { ChordDisplay } from './components/ChordDisplay';
-import { LayoutGrid, Sliders, Piano } from 'lucide-react';
+import { Visualizer } from './components/Visualizer';
+import { ExportButton } from './components/ExportButton';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { LayoutGrid, Sliders, Piano, Keyboard } from 'lucide-react';
 
 function ViewTab({ active, onClick, icon: Icon, label }: {
   active: boolean;
@@ -30,6 +33,7 @@ function ViewTab({ active, onClick, icon: Icon, label }: {
 
 export default function App() {
   const { activeView, setActiveView, composition } = useStore();
+  useKeyboardShortcuts();
 
   return (
     <div className="h-screen flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden select-none">
@@ -68,11 +72,22 @@ export default function App() {
           />
         </div>
 
-        <div className="w-44" />
+        <div className="flex items-center gap-2">
+          <ExportButton />
+          <div className="flex items-center gap-1 text-[9px] text-zinc-600" title="Space=Play/Pause, Esc=Stop, Ctrl+G=Generate, Ctrl+L=Loop">
+            <Keyboard size={10} />
+            <span>Space / Esc</span>
+          </div>
+        </div>
       </header>
 
-      {/* Transport */}
+      {/* Transport + Visualizer */}
       <TransportBar />
+
+      {/* Audio Visualizer */}
+      <div className="px-6 py-1 bg-zinc-900/40 border-b border-zinc-800/30">
+        <Visualizer />
+      </div>
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
