@@ -53,7 +53,8 @@ export interface CompositionParams {
 export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
-  | 'minimalist' | 'cinematic' | 'electronic';
+  | 'minimalist' | 'cinematic' | 'electronic'
+  | 'bossa_nova' | 'lo_fi' | 'gospel';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -73,10 +74,12 @@ export interface Track {
 export type InstrumentType =
   | 'piano' | 'strings' | 'bass' | 'pads'
   | 'bells' | 'brass' | 'woodwind' | 'drums'
-  | 'harp' | 'organ' | 'choir' | 'synth_lead';
+  | 'harp' | 'organ' | 'choir' | 'synth_lead'
+  | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
+  | 'vibraphone' | 'clavinet' | 'tape_keys';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
   wet: number;
   params: Record<string, number>;
 }
