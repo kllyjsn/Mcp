@@ -309,7 +309,7 @@ export function generateChordProgression(
 
     const useSpread = (style === 'listening_room' || style === 'modal_jazz' || style === 'chamber') && Math.random() > 0.5;
     const voicing = useSpread
-      ? voiceLeadChord(prevVoicing, chordRoot, quality)
+      ? buildSpreadVoicing(chordRoot, quality, 3)
       : voiceLeadChord(prevVoicing, chordRoot, quality);
 
     const splitMeasure = complexity >= 7 && Math.random() > 0.5;

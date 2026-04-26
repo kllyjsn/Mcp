@@ -60,7 +60,7 @@ export function getScaleNotesMultiOctave(root: NoteName, scale: ScaleType, start
 }
 
 export function isNoteInScale(midi: number, root: NoteName, scale: ScaleType): boolean {
-  const rootIndex = NOTE_NAMES.indexOf(root);
+  const rootIndex = NOTE_NAMES.indexOf(resolveNoteName(root));
   const noteIndex = (midi - rootIndex + 120) % 12;
   return SCALE_INTERVALS[scale].includes(noteIndex);
 }
