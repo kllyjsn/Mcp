@@ -1,7 +1,7 @@
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles } from 'lucide-react';
+import { Music, Waves, Zap, Heart, Sparkles, Globe, Moon, Layers } from 'lucide-react';
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -21,22 +21,34 @@ const SCALES: { value: ScaleType; label: string }[] = [
 const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] = [
   { value: 'classical', label: 'Classical', icon: Music },
   { value: 'romantic', label: 'Romantic', icon: Heart },
-  { value: 'impressionist', label: 'Impressionist', icon: Waves },
+  { value: 'post_romantic', label: 'Post-Rom.', icon: Heart },
+  { value: 'impressionist', label: 'Impress.', icon: Waves },
   { value: 'jazz', label: 'Jazz', icon: Sparkles },
+  { value: 'modal_jazz', label: 'Modal', icon: Moon },
   { value: 'neo_soul', label: 'Neo Soul', icon: Sparkles },
+  { value: 'bossa_nova', label: 'Bossa', icon: Globe },
   { value: 'ambient', label: 'Ambient', icon: Waves },
-  { value: 'minimalist', label: 'Minimalist', icon: Zap },
-  { value: 'cinematic', label: 'Cinematic', icon: Music },
+  { value: 'minimalist', label: 'Minimal', icon: Layers },
+  { value: 'cinematic', label: 'Cinema', icon: Music },
   { value: 'electronic', label: 'Electronic', icon: Zap },
 ];
 
 const DYNAMICS: { value: DynamicCurve; label: string }[] = [
   { value: 'crescendo', label: 'Crescendo' },
-  { value: 'decrescendo', label: 'Decrescendo' },
+  { value: 'decrescendo', label: 'Decresc.' },
   { value: 'swell', label: 'Swell' },
   { value: 'terraced', label: 'Terraced' },
   { value: 'flat', label: 'Flat' },
   { value: 'dramatic', label: 'Dramatic' },
+];
+
+const TIME_SIGNATURES: { value: [number, number]; label: string }[] = [
+  { value: [4, 4], label: '4/4' },
+  { value: [3, 4], label: '3/4' },
+  { value: [6, 8], label: '6/8' },
+  { value: [5, 4], label: '5/4' },
+  { value: [7, 8], label: '7/8' },
+  { value: [2, 4], label: '2/4' },
 ];
 
 function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
@@ -115,6 +127,24 @@ export function CompositionPanel() {
               ))}
             </select>
           </div>
+          <div className="mt-2">
+            <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-medium mb-1 block">Time Signature</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {TIME_SIGNATURES.map(ts => (
+                <button
+                  key={ts.label}
+                  onClick={() => setParam('timeSignature', ts.value)}
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-mono font-medium transition-all ${
+                    params.timeSignature[0] === ts.value[0] && params.timeSignature[1] === ts.value[1]
+                      ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
+                      : 'bg-zinc-800/40 text-zinc-400 border border-zinc-700/30 hover:bg-zinc-800/70 hover:text-zinc-300'
+                  }`}
+                >
+                  {ts.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="h-px bg-zinc-800/50" />
@@ -184,6 +214,12 @@ export function CompositionPanel() {
             label="Expressiveness"
             value={params.expressiveness}
             onChange={v => setParam('expressiveness', v)}
+          />
+          <SliderParam
+            label="Humanize"
+            value={params.humanize}
+            onChange={v => setParam('humanize', v)}
+            min={0}
           />
         </div>
       </div>

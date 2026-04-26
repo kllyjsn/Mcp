@@ -17,6 +17,13 @@ export const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
   add9:              [0, 4, 7, 14],
   minor9:            [0, 3, 7, 10, 14],
   major9:            [0, 4, 7, 11, 14],
+  dominant9:         [0, 4, 7, 10, 14],
+  minor11:           [0, 3, 7, 10, 14, 17],
+  major11:           [0, 4, 7, 11, 14, 17],
+  dominant13:        [0, 4, 7, 10, 14, 21],
+  minor_major7:      [0, 3, 7, 11],
+  dominant7sharp9:   [0, 4, 7, 10, 15],
+  dominant7flat9:    [0, 4, 7, 10, 13],
 };
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
@@ -37,7 +44,7 @@ function getDiatonicChords(scale: ScaleType): DiatonicChord[] {
       { degree: 3, quality: 'major', roman: 'IV' },
       { degree: 4, quality: 'dominant7', roman: 'V7' },
       { degree: 5, quality: 'minor', roman: 'vi' },
-      { degree: 6, quality: 'diminished', roman: 'vii°' },
+      { degree: 6, quality: 'diminished', roman: 'vii\u00b0' },
     ];
   }
 
@@ -50,7 +57,7 @@ function getDiatonicChords(scale: ScaleType): DiatonicChord[] {
     let roman = ROMAN_NUMERALS[i];
 
     if (third === 3 && fifth === 7) { quality = 'minor'; roman = roman.toLowerCase(); }
-    else if (third === 3 && fifth === 6) { quality = 'diminished'; roman = roman.toLowerCase() + '°'; }
+    else if (third === 3 && fifth === 6) { quality = 'diminished'; roman = roman.toLowerCase() + '\u00b0'; }
     else if (third === 4 && fifth === 8) { quality = 'augmented'; roman = roman + '+'; }
 
     chords.push({ degree: i, quality, roman });
@@ -92,8 +99,14 @@ export function voiceLeadChord(prevVoicing: number[], nextRoot: NoteName, nextQu
     const maxNote = Math.max(...candidate);
     if (minNote < 36 || maxNote > 72) continue;
 
-    if (distance < bestDistance) {
-      bestDistance = distance;
+    let commonTones = 0;
+    for (const p of prevVoicing) {
+      if (candidate.some(c => Math.abs(c - p) <= 1)) commonTones++;
+    }
+    const score = distance - commonTones * 2;
+
+    if (score < bestDistance) {
+      bestDistance = score;
       bestVoicing = candidate;
     }
   }
@@ -108,21 +121,91 @@ interface ProgressionTemplate {
 }
 
 const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
+  // Classical
   { name: 'Classical I-IV-V-I', degrees: [0, 3, 4, 0], style: 'classical' },
   { name: 'Circle of Fifths', degrees: [0, 3, 6, 2, 5, 1, 4, 0], style: 'classical' },
-  { name: 'Romantic I-vi-IV-V', degrees: [0, 5, 3, 4], style: 'romantic' },
-  { name: 'Jazz ii-V-I', degrees: [1, 4, 0], style: 'jazz' },
-  { name: 'Jazz I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'jazz' },
-  { name: 'Neo Soul I-III-vi-IV', degrees: [0, 2, 5, 3], style: 'neo_soul' },
-  { name: 'Impressionist I-bVII-IV', degrees: [0, 6, 3], style: 'impressionist' },
-  { name: 'Cinematic i-VI-III-VII', degrees: [0, 5, 2, 6], style: 'cinematic' },
-  { name: 'Ambient I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'ambient' },
-  { name: 'Minimalist I-II', degrees: [0, 1], style: 'minimalist' },
-  { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
   { name: 'Phrygian i-bII-bVII-i', degrees: [0, 1, 6, 0], style: 'classical' },
   { name: 'Plagal IV-I', degrees: [3, 0], style: 'classical' },
+
+  // Romantic
+  { name: 'Romantic I-vi-IV-V', degrees: [0, 5, 3, 4], style: 'romantic' },
   { name: 'Descending Bass I-V/7-vi-IV', degrees: [0, 4, 5, 3], style: 'romantic' },
+
+  // Post-Romantic
+  { name: 'Rachmaninoff i-iv-V-VI-ii\u00b0-V', degrees: [0, 3, 4, 5, 1, 4], style: 'post_romantic' },
+  { name: 'Elgar I-iii-vi-IV-ii-V', degrees: [0, 2, 5, 3, 1, 4], style: 'post_romantic' },
+
+  // Impressionist
+  { name: 'Impressionist I-bVII-IV', degrees: [0, 6, 3], style: 'impressionist' },
+  { name: 'Debussy Planing I-II-III', degrees: [0, 1, 2, 1], style: 'impressionist' },
+  { name: 'Ravel Color I-III-bVI-IV', degrees: [0, 2, 5, 3], style: 'impressionist' },
+
+  // Jazz
+  { name: 'Jazz ii-V-I', degrees: [1, 4, 0], style: 'jazz' },
+  { name: 'Jazz I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'jazz' },
+  { name: 'Coltrane Changes I-III-VI-II-V-I', degrees: [0, 2, 5, 1, 4, 0], style: 'jazz' },
+  { name: 'Bird Blues I-IV-I-vi-ii-V', degrees: [0, 3, 0, 5, 1, 4], style: 'jazz' },
+
+  // Modal Jazz
+  { name: 'Modal Quartal I-IV', degrees: [0, 3], style: 'modal_jazz' },
+  { name: 'So What ii-ii (half step up)', degrees: [1, 1, 2, 1], style: 'modal_jazz' },
+  { name: 'Modal Plateau I-bVII-I-IV', degrees: [0, 6, 0, 3], style: 'modal_jazz' },
+
+  // Neo Soul
+  { name: 'Neo Soul I-III-vi-IV', degrees: [0, 2, 5, 3], style: 'neo_soul' },
+  { name: 'Erykah Badu ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'neo_soul' },
+
+  // Bossa Nova
+  { name: 'Jobim I-ii-V-I', degrees: [0, 1, 4, 0], style: 'bossa_nova' },
+  { name: 'Girl from Ipanema I-II-ii-bII', degrees: [0, 1, 1, 0], style: 'bossa_nova' },
+  { name: 'Bossa ii-V-I-IV-iii-vi-ii-V', degrees: [1, 4, 0, 3, 2, 5, 1, 4], style: 'bossa_nova' },
+
+  // Cinematic
+  { name: 'Cinematic i-VI-III-VII', degrees: [0, 5, 2, 6], style: 'cinematic' },
+  { name: 'Epic i-bVI-bIII-bVII', degrees: [0, 5, 2, 6], style: 'cinematic' },
+
+  // Ambient
+  { name: 'Ambient I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'ambient' },
+  { name: 'Ambient Drift I-iii-V', degrees: [0, 2, 4], style: 'ambient' },
+
+  // Minimalist
+  { name: 'Minimalist I-II', degrees: [0, 1], style: 'minimalist' },
+  { name: 'Glass Oscillation I-V-I-IV', degrees: [0, 4, 0, 3], style: 'minimalist' },
+
+  // Electronic
+  { name: 'Electronic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'electronic' },
+  { name: 'EDM i-bVI-bIII-bVII', degrees: [0, 5, 2, 6], style: 'electronic' },
 ];
+
+function elevateQuality(quality: ChordQuality, complexity: number, style: string): ChordQuality {
+  if (complexity >= 5) {
+    if (quality === 'major') quality = 'major7';
+    else if (quality === 'minor') quality = 'minor7';
+  }
+
+  if (complexity >= 7 && Math.random() > 0.5) {
+    if (quality === 'major7') quality = 'major9';
+    else if (quality === 'minor7') quality = 'minor9';
+    else if (quality === 'dominant7') quality = 'dominant9';
+  }
+
+  if (complexity >= 9 && Math.random() > 0.6) {
+    if (quality === 'minor9') quality = 'minor11';
+    else if (quality === 'dominant9') quality = 'dominant13';
+  }
+
+  if ((style === 'jazz' || style === 'neo_soul' || style === 'modal_jazz' || style === 'bossa_nova') && complexity >= 6) {
+    if (quality === 'dominant7' && Math.random() > 0.7) {
+      quality = Math.random() > 0.5 ? 'dominant7sharp9' : 'dominant7flat9';
+    }
+  }
+
+  if (style === 'post_romantic' && quality === 'minor7' && Math.random() > 0.7) {
+    quality = 'minor_major7';
+  }
+
+  return quality;
+}
 
 export function generateChordProgression(
   key: NoteName,
@@ -148,16 +231,7 @@ export function generateChordProgression(
     const degree = template.degrees[degreeIndex];
     const diatonic = diatonicChords[degree % diatonicChords.length];
 
-    let quality = diatonic.quality;
-    if (complexity >= 5) {
-      if (quality === 'major') quality = 'major7';
-      else if (quality === 'minor') quality = 'minor7';
-      else if (quality === 'dominant7') quality = 'dominant7';
-    }
-    if (complexity >= 8 && Math.random() > 0.6) {
-      if (quality === 'major7') quality = 'major9';
-      else if (quality === 'minor7') quality = 'minor9';
-    }
+    const quality = elevateQuality(diatonic.quality, complexity, style);
 
     const scaleIntervals = SCALE_INTERVALS[scale];
     const majorIntervals = SCALE_INTERVALS['major'];
@@ -183,10 +257,9 @@ export function generateChordProgression(
       });
       currentBeat += halfDuration;
 
-      // passing chord: use the next measure's target as a secondary dominant approach
       const nextDegreeIndex = (measure + 1) % template.degrees.length;
       const nextDegree = template.degrees[nextDegreeIndex];
-      const passingDegree = (nextDegree + 4) % 7; // dominant approach
+      const passingDegree = (nextDegree + 4) % 7;
       const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
       const passingQuality: ChordQuality = complexity >= 5 ? 'dominant7' : 'major';
       const passingInterval = (scaleIntervals && passingDegree < scaleIntervals.length) ? scaleIntervals[passingDegree] : majorIntervals[passingDegree];
@@ -227,8 +300,10 @@ export function chordToString(chord: Chord): string {
   const qualityStr: Record<string, string> = {
     major: '', minor: 'm', diminished: 'dim', augmented: 'aug',
     dominant7: '7', major7: 'maj7', minor7: 'm7',
-    diminished7: 'dim7', half_diminished7: 'ø7', augmented7: 'aug7',
+    diminished7: 'dim7', half_diminished7: '\u00f87', augmented7: 'aug7',
     sus2: 'sus2', sus4: 'sus4', add9: 'add9', minor9: 'm9', major9: 'maj9',
+    dominant9: '9', minor11: 'm11', major11: 'maj11', dominant13: '13',
+    minor_major7: 'm\u0394', dominant7sharp9: '7\u266f9', dominant7flat9: '7\u266d9',
   };
   return `${chord.root}${qualityStr[chord.quality] ?? ''}`;
 }

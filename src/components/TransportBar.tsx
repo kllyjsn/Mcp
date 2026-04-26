@@ -1,4 +1,4 @@
-import { Play, Pause, Square, RotateCcw, Repeat, SkipBack } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, Repeat, SkipBack, Download } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { motion } from 'framer-motion';
 
@@ -11,8 +11,10 @@ export function TransportBar() {
     stopPlayback,
     generate,
     isGenerating,
+    isExporting,
     toggleLoop,
     setTempo,
+    exportComposition,
   } = useStore();
 
   return (
@@ -87,6 +89,17 @@ export function TransportBar() {
       </div>
 
       <div className="h-6 w-px bg-zinc-800 mx-1" />
+
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={exportComposition}
+        disabled={!composition || isExporting}
+        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 hover:text-zinc-100 rounded-lg text-sm font-medium transition-all disabled:opacity-30 border border-zinc-700/30"
+        title="Export WAV"
+      >
+        <Download size={14} className={isExporting ? 'animate-bounce' : ''} />
+        {isExporting ? 'Rendering...' : 'Export'}
+      </motion.button>
 
       <motion.button
         whileTap={{ scale: 0.97 }}

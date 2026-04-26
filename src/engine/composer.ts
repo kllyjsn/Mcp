@@ -1,9 +1,10 @@
 import type { Composition, CompositionParams, Track } from '../types/music';
 import { generateChordProgression } from './chords';
-import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern } from './melody';
+import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern, generateCountermelody } from './melody';
 
 const TRACK_COLORS: Record<string, string> = {
   melody: '#C8A97E',
+  countermelody: '#A87EC8',
   harmony: '#7E9CC8',
   bass: '#8B5E3C',
   pads: '#6B8E7E',
@@ -25,6 +26,7 @@ export function compose(params: CompositionParams): Composition {
   );
 
   const melodyNotes = generateMelody(params, chords, [4, 6]);
+  const countermelodyNotes = generateCountermelody(params, chords, melodyNotes);
   const bassNotes = generateBassLine(params, chords);
   const padNotes = generatePadVoicings(params, chords);
   const arpeggioNotes = generateArpeggio(params, chords);
@@ -41,7 +43,25 @@ export function compose(params: CompositionParams): Composition {
       muted: false,
       solo: false,
       color: TRACK_COLORS.melody,
-      effects: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
+      effects: [
+        { type: 'reverb', wet: 0.25, params: { decay: 2.5 } },
+        { type: 'delay', wet: 0.08, params: { delayTime: 0.3, feedback: 0.15 } },
+      ],
+    },
+    {
+      id: makeTrackId(),
+      name: 'Countermelody',
+      instrument: 'woodwind',
+      notes: countermelodyNotes,
+      volume: 0.4,
+      pan: 0.25,
+      muted: false,
+      solo: false,
+      color: TRACK_COLORS.countermelody,
+      effects: [
+        { type: 'reverb', wet: 0.35, params: { decay: 3 } },
+        { type: 'chorus', wet: 0.15, params: { frequency: 0.8, depth: 0.4 } },
+      ],
     },
     {
       id: makeTrackId(),
@@ -119,6 +139,12 @@ export function recomposeTrack(
   let newNotes;
   switch (track.name) {
     case 'Melody': newNotes = generateMelody(params, chordProgression, [4, 6]); break;
+    case 'Countermelody': {
+      const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
+      const primaryMelody = melodyTrack ? melodyTrack.notes : [];
+      newNotes = generateCountermelody(params, chordProgression, primaryMelody);
+      break;
+    }
     case 'Bass': newNotes = generateBassLine(params, chordProgression); break;
     case 'Harmony': newNotes = generatePadVoicings(params, chordProgression); break;
     case 'Arpeggio': newNotes = generateArpeggio(params, chordProgression); break;
