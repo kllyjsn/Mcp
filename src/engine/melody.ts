@@ -780,7 +780,6 @@ function generateJazzDrums(params: CompositionParams, tension?: TensionCurve): N
   const RIM = 37;
 
   for (let beat = 0; beat < totalBeats; beat += 0.5) {
-    const isDownbeat = beat % params.timeSignature[0] === 0;
     const beatInBar = beat % params.timeSignature[0];
     const tensionVal = tension ? tensionAtBeat(tension, beat) : 0.5;
 
@@ -793,23 +792,17 @@ function generateJazzDrums(params: CompositionParams, tension?: TensionCurve): N
       notes.push({ pitch: RIDE, velocity: 35 + Math.floor(Math.random() * 15), duration: 0.25, startBeat: beat });
     }
 
-    // Comping: feathered kick on 1 and 3, with random ghost kicks
+    // Comping: feathered kick on 1 and 3, tension-aware accent
     if (beatInBar === 0 || beatInBar === 2) {
-      notes.push({ pitch: KICK, velocity: 45 + Math.floor(Math.random() * 15), duration: 0.2, startBeat: beat });
+      const accentChance = beatInBar === 0 ? (0.7 - tensionVal * 0.2) : (0.9 - tensionVal * 0.15);
+      const accented = Math.random() > accentChance;
+      const vel = accented ? 65 + Math.floor(Math.random() * 20) : 45 + Math.floor(Math.random() * 15);
+      notes.push({ pitch: KICK, velocity: vel, duration: 0.2, startBeat: beat });
     }
 
     // Hi-hat on 2 and 4
     if (beatInBar === 1 || beatInBar === 3) {
       notes.push({ pitch: HIHAT_CLOSED, velocity: 40 + Math.floor(Math.random() * 15), duration: 0.1, startBeat: beat });
-    }
-
-    // Snare comping — sparse, tension-aware
-    if (isDownbeat && Math.random() > (0.7 - tensionVal * 0.2)) {
-      notes.push({ pitch: KICK, velocity: 65 + Math.floor(Math.random() * 20), duration: 0.25, startBeat: beat });
-    }
-
-    if (!isDownbeat && Math.random() > (0.9 - tensionVal * 0.15)) {
-      notes.push({ pitch: KICK, velocity: 50 + Math.floor(Math.random() * 20), duration: 0.2, startBeat: beat });
     }
 
     // Cross-stick at low tension, snare hits at high tension
