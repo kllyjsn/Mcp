@@ -357,11 +357,17 @@ export function generateChordProgression(
 
 /**
  * Apply tension-aware quality upgrades to an existing chord progression in-place.
- * This avoids regenerating chords (and getting a different random template).
+ * Rebuilds voicings with voice-leading after quality changes so extended tones are audible.
  */
-export function applyTensionToChords(chords: Chord[], complexity: number, tension: TensionCurve): void {
-  for (const chord of chords) {
-    chord.quality = tensionAwareQuality(chord.quality, complexity, tension, chord.startBeat);
+export function applyTensionToChords(chords: Chord[], complexity: number, tension: TensionCurve, style: CompositionStyle): void {
+  for (let i = 0; i < chords.length; i++) {
+    const chord = chords[i];
+    const newQuality = tensionAwareQuality(chord.quality, complexity, tension, chord.startBeat);
+    if (newQuality !== chord.quality) {
+      chord.quality = newQuality;
+      const prevVoicing = i > 0 ? chords[i - 1].voicing : chord.voicing;
+      chord.voicing = voiceLeadChord(prevVoicing, chord.root, newQuality, style);
+    }
   }
 }
 

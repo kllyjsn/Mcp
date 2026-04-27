@@ -170,7 +170,7 @@ export function compose(params: CompositionParams): Composition {
     params.key, params.scale, params.measures, params.style, params.harmonicComplexity,
   );
   const tension = generateTensionCurve(totalBeats, beatsPerBar, params.style, chords);
-  applyTensionToChords(chords, params.harmonicComplexity, tension);
+  applyTensionToChords(chords, params.harmonicComplexity, tension, params.style);
   const phrases = getPhraseStructures(totalBeats, beatsPerBar, params.style, tension);
 
   const sv = STYLE_VOICINGS[params.style];
