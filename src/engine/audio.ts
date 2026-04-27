@@ -81,13 +81,6 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
       volume: -6,
     }),
   },
-  sub_bass: {
-    create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.01, decay: 0.4, sustain: 0.6, release: 0.3 },
-      volume: -4,
-    }),
-  },
   upright_bass: {
     create: () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle4' },
@@ -113,13 +106,6 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
       volume: -12,
     }),
   },
-  warm_pad: {
-    create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fattriangle', spread: 25, count: 3 },
-      envelope: { attack: 1.2, decay: 0.8, sustain: 0.75, release: 5 },
-      volume: -14,
-    }),
-  },
   organ: {
     create: () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine8' },
@@ -138,6 +124,68 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
     create: () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'fatsawtooth', spread: 30, count: 3 },
       envelope: { attack: 0.02, decay: 0.3, sustain: 0.5, release: 0.8 },
+      volume: -8,
+    }),
+  },
+  // New instruments
+  harp: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.002, decay: 1.5, sustain: 0.05, release: 3 },
+      volume: -10,
+    }),
+  },
+  choir: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsine4', spread: 25, count: 4 },
+      envelope: { attack: 0.8, decay: 0.6, sustain: 0.7, release: 3.5 },
+      volume: -14,
+    }),
+  },
+  brass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 15, count: 3 },
+      envelope: { attack: 0.08, decay: 0.2, sustain: 0.7, release: 0.6 },
+      volume: -10,
+    }),
+  },
+  warm_pad: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 1.5,
+      modulationIndex: 0.3,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 1.2, decay: 0.8, sustain: 0.65, release: 4 },
+      modulation: { type: 'triangle' },
+      modulationEnvelope: { attack: 0.5, decay: 1.0, sustain: 0.3, release: 2 },
+      volume: -14,
+    }),
+  },
+  sub_bass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.15, sustain: 0.6, release: 0.3 },
+      volume: -4,
+    }),
+  },
+  kalimba: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 6,
+      modulationIndex: 0.6,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.6, sustain: 0.02, release: 1.5 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 1 },
+      volume: -10,
+    }),
+  },
+  marimba: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 4,
+      modulationIndex: 0.8,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 1.2 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.8 },
       volume: -8,
     }),
   },
@@ -232,6 +280,23 @@ function createTrackEffects(track: Track): Tone.ToneAudioNode[] {
         const bc = new Tone.BitCrusher(effect.params.bits ?? 8);
         bc.wet.value = effect.wet;
         fxChain.push(bc);
+        break;
+      }
+      case 'autofilter': {
+        const af = new Tone.AutoFilter({
+          frequency: effect.params.frequency ?? 1,
+          baseFrequency: effect.params.baseFrequency ?? 200,
+          octaves: effect.params.octaves ?? 2.6,
+          wet: effect.wet,
+        }).start();
+        fxChain.push(af);
+        break;
+      }
+      case 'widener': {
+        const widener = new Tone.StereoWidener(
+          Math.min(1, effect.params.width ?? 0.5),
+        );
+        fxChain.push(widener);
         break;
       }
     }
@@ -339,17 +404,14 @@ function scheduleTrackNotes(
           drumSynths.snare.triggerAttackRelease('8n', t, vel);
         }, time);
       } else if (note.pitch === 49 || note.pitch === 51) {
-        // crash / ride — longer decay, full velocity
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('4n', t, vel * 0.7);
         }, time);
       } else if (note.pitch === 46) {
-        // open hihat — medium decay
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('8n', t, vel * 0.5);
         }, time);
       } else {
-        // closed hihat (42) and fallback
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('32n', t, vel * 0.3);
         }, time);
