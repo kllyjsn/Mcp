@@ -40,7 +40,8 @@ export function getTensionAtBeat(curve: TensionCurve, beat: number): number {
     const a = curve[i];
     const b = curve[i + 1];
     if (beat >= a.beat && beat <= b.beat) {
-      const t = (beat - a.beat) / (b.beat - a.beat);
+      const range = b.beat - a.beat;
+      const t = range === 0 ? 0 : (beat - a.beat) / range;
       return a.tension + (b.tension - a.tension) * t;
     }
   }
