@@ -332,7 +332,7 @@ export function generateChordProgression(
     // --- Advanced substitutions (mutually exclusive) ---
 
     if (complexity >= 7 && tension > 0.6 && diatonic.quality === 'dominant7' && Math.random() > 0.6) {
-      const sub = { rootIndex: (rootIndex + 6) % 12, quality: (quality === 'dominant7' ? 'dominant7' : 'major7') as ChordQuality };
+      const sub = { rootIndex: (rootIndex + 6) % 12, quality };
       rootIndex = sub.rootIndex;
       quality = sub.quality;
       roman = 'bII7';
