@@ -87,10 +87,6 @@ function pickCounterPitch(
   const targetInterval = tension > 0.6 ? 7 : tension > 0.3 ? 5 : 3;
   let target = mainPitch - targetInterval;
 
-  if (target > mainPitch - 2) {
-    target = mainPitch - 5;
-  }
-
   if (Math.random() < 0.5) {
     const nearest = chordTones.reduce((best, ct) =>
       Math.abs(ct - target) < Math.abs(best - target) ? ct : best,
@@ -99,6 +95,10 @@ function pickCounterPitch(
     if (Math.abs(nearest - target) <= 5) {
       target = nearest;
     }
+  }
+
+  if (Math.abs(target - mainPitch) < 2) {
+    target = mainPitch - 5;
   }
 
   const inScale = scaleNotes.find(n => Math.abs(n - target) <= 1);
