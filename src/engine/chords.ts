@@ -245,22 +245,20 @@ function tensionAwareQuality(
 
   // High tension + high complexity → richer extensions
   if (complexity >= 7 && t > 0.6) {
-    if (baseQuality === 'dominant7')  return Math.random() > 0.5 ? 'dominant9' : 'dominant13';
-    if (baseQuality === 'minor7')     return Math.random() > 0.6 ? 'minor9' : 'minor11';
-    if (baseQuality === 'major7')     return Math.random() > 0.5 ? 'major9' : 'major7';
-  }
-
-  if (complexity >= 8 && t > 0.4) {
-    if (baseQuality === 'major7') return Math.random() > 0.6 ? 'major9' : 'major7';
-    if (baseQuality === 'minor7') return Math.random() > 0.6 ? 'minor9' : 'minor7';
+    if (baseQuality === 'dominant7')  baseQuality = Math.random() > 0.5 ? 'dominant9' : 'dominant13';
+    else if (baseQuality === 'minor7')     baseQuality = Math.random() > 0.6 ? 'minor9' : 'minor11';
+    else if (baseQuality === 'major7')     baseQuality = Math.random() > 0.5 ? 'major9' : 'major7';
+  } else if (complexity >= 8 && t > 0.4) {
+    if (baseQuality === 'major7') baseQuality = Math.random() > 0.6 ? 'major9' : 'major7';
+    else if (baseQuality === 'minor7') baseQuality = Math.random() > 0.6 ? 'minor9' : 'minor7';
   }
 
   // Low tension → simpler chord for resolution clarity
   if (t < 0.2 && complexity < 8) {
-    if (baseQuality === 'major9')    return 'major7';
-    if (baseQuality === 'minor9')    return 'minor7';
-    if (baseQuality === 'dominant9') return 'dominant7';
-    if (baseQuality === 'minor11')   return 'minor7';
+    if (baseQuality === 'major9')    baseQuality = 'major7';
+    else if (baseQuality === 'minor9')    baseQuality = 'minor7';
+    else if (baseQuality === 'dominant9') baseQuality = 'dominant7';
+    else if (baseQuality === 'minor11')   baseQuality = 'minor7';
   }
 
   return baseQuality;

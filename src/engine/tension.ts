@@ -156,7 +156,7 @@ export function getPhraseStructures(
     if (p === numPhrases - 1 && numPhrases > 2) {
       type = 'coda';
     } else if (p % 2 === 0) {
-      type = p >= numPhrases - 2 ? 'development' : 'antecedent';
+      type = p > 0 && p >= numPhrases - 2 ? 'development' : 'antecedent';
     } else {
       type = 'consequent';
     }
