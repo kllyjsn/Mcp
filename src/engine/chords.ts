@@ -45,11 +45,13 @@ function getDiatonicChords(scale: ScaleType): DiatonicChord[] {
   for (let i = 0; i < 7; i++) {
     const third = (intervals[(i + 2) % intervals.length] - intervals[i] + 12) % 12;
     const fifth = (intervals[(i + 4) % intervals.length] - intervals[i] + 12) % 12;
+    const seventh = (intervals[(i + 6) % intervals.length] - intervals[i] + 12) % 12;
 
     let quality: ChordQuality = 'major';
     let roman = ROMAN_NUMERALS[i];
 
-    if (third === 3 && fifth === 7) { quality = 'minor'; roman = roman.toLowerCase(); }
+    if (third === 4 && fifth === 7 && seventh === 10) { quality = 'dominant7'; roman = roman + '7'; }
+    else if (third === 3 && fifth === 7) { quality = 'minor'; roman = roman.toLowerCase(); }
     else if (third === 3 && fifth === 6) { quality = 'diminished'; roman = roman.toLowerCase() + '°'; }
     else if (third === 4 && fifth === 8) { quality = 'augmented'; roman = roman + '+'; }
 
