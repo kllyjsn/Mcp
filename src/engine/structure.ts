@@ -1,4 +1,4 @@
-import type { CompositionStyle, Section } from '../types/music';
+import type { CompositionStyle, Note, Section } from '../types/music';
 
 type FormType = 'aaba' | 'verse_chorus' | 'aba' | 'through' | 'rondo';
 
@@ -57,9 +57,11 @@ function buildAABA(totalMeasures: number): Section[] {
 function buildVerseChorus(totalMeasures: number): Section[] {
   const sections: Section[] = [];
 
-  if (totalMeasures <= 4) {
-    sections.push({ label: 'Verse', startMeasure: 0, measures: Math.ceil(totalMeasures / 2), energy: 0.5, densityMod: 0.8, complexityMod: 0.9, activeVoices: sparse({ drums: true }) });
-    sections.push({ label: 'Chorus', startMeasure: Math.ceil(totalMeasures / 2), measures: Math.floor(totalMeasures / 2), energy: 0.9, densityMod: 1.15, complexityMod: 1.1, activeVoices: full() });
+  if (totalMeasures <= 8) {
+    const v = Math.ceil(totalMeasures / 2);
+    const c = totalMeasures - v;
+    sections.push({ label: 'Verse', startMeasure: 0, measures: v, energy: 0.5, densityMod: 0.8, complexityMod: 0.9, activeVoices: sparse({ drums: true }) });
+    sections.push({ label: 'Chorus', startMeasure: v, measures: c, energy: 0.9, densityMod: 1.15, complexityMod: 1.1, activeVoices: full() });
     return sections;
   }
 
@@ -192,5 +194,3 @@ export function muteInactiveSections(
     return section.activeVoices[key] !== false;
   });
 }
-
-import type { Note } from '../types/music';
