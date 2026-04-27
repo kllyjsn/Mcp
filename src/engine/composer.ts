@@ -268,6 +268,7 @@ export function compose(params: CompositionParams): Composition {
     params,
     tracks,
     chordProgression: chords,
+    sections: [],
     createdAt: Date.now(),
   };
 }

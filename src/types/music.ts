@@ -87,12 +87,23 @@ export interface TrackEffect {
   params: Record<string, number>;
 }
 
+export type SectionKind = 'intro' | 'verse' | 'build' | 'climax' | 'breakdown' | 'outro';
+
+export interface Section {
+  kind: SectionKind;
+  startMeasure: number;
+  lengthMeasures: number;
+  trackPresence: Record<string, number>;
+  tension: number;
+}
+
 export interface Composition {
   id: string;
   name: string;
   params: CompositionParams;
   tracks: Track[];
   chordProgression: Chord[];
+  sections: Section[];
   createdAt: number;
 }
 
