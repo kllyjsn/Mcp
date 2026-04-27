@@ -1,4 +1,4 @@
-import type { NoteName, ScaleType, ChordQuality, Chord } from '../types/music';
+import type { NoteName, ScaleType, ChordQuality, Chord, FormSection } from '../types/music';
 import { NOTE_NAMES, noteNameToMidi, SCALE_INTERVALS } from './scales';
 
 export const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
@@ -17,6 +17,13 @@ export const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
   add9:              [0, 4, 7, 14],
   minor9:            [0, 3, 7, 10, 14],
   major9:            [0, 4, 7, 11, 14],
+  dominant9:         [0, 4, 7, 10, 14],
+  minor11:           [0, 3, 7, 10, 14, 17],
+  major13:           [0, 4, 7, 11, 14, 21],
+  dominant13:        [0, 4, 7, 10, 14, 21],
+  altered:           [0, 4, 6, 10, 13, 15],
+  dominant7sharp9:   [0, 4, 7, 10, 15],
+  dominant7flat9:    [0, 4, 7, 10, 13],
 };
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
@@ -122,19 +129,78 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   { name: 'Phrygian i-bII-bVII-i', degrees: [0, 1, 6, 0], style: 'classical' },
   { name: 'Plagal IV-I', degrees: [3, 0], style: 'classical' },
   { name: 'Descending Bass I-V/7-vi-IV', degrees: [0, 4, 5, 3], style: 'romantic' },
-  // Bossa nova — smooth II-V motion, modal colour
   { name: 'Bossa I-vi-II-V', degrees: [0, 5, 1, 4], style: 'bossa_nova' },
   { name: 'Bossa I-IV-iii-vi', degrees: [0, 3, 2, 5], style: 'bossa_nova' },
   { name: 'Bossa I-bVII-vi-V', degrees: [0, 6, 5, 4], style: 'bossa_nova' },
-  // Lo-fi — jazzy loops, major 7ths, warm
   { name: 'Lo-fi ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'lo_fi' },
   { name: 'Lo-fi I-iii-IV-iv', degrees: [0, 2, 3, 3], style: 'lo_fi' },
   { name: 'Lo-fi vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'lo_fi' },
-  // Gospel — plagal movement, IV heavy, passing chords
   { name: 'Gospel I-IV-I-V', degrees: [0, 3, 0, 4], style: 'gospel' },
   { name: 'Gospel I-iii-IV-V-I', degrees: [0, 2, 3, 4, 0], style: 'gospel' },
   { name: 'Gospel IV-V-iii-vi', degrees: [3, 4, 2, 5], style: 'gospel' },
+  // Afrobeat — call-and-response, modal patterns, hypnotic repetition
+  { name: 'Afrobeat I-IV-I-V', degrees: [0, 3, 0, 4], style: 'afrobeat' },
+  { name: 'Afrobeat I-bVII-IV-I', degrees: [0, 6, 3, 0], style: 'afrobeat' },
+  { name: 'Afrobeat i-iv-v-i', degrees: [0, 3, 4, 0], style: 'afrobeat' },
+  // UK Garage — 2-step shuffled, R&B-inflected chords
+  { name: 'UKG I-vi-IV-V', degrees: [0, 5, 3, 4], style: 'uk_garage' },
+  { name: 'UKG ii-V-I-vi', degrees: [1, 4, 0, 5], style: 'uk_garage' },
+  { name: 'UKG I-iii-vi-IV', degrees: [0, 2, 5, 3], style: 'uk_garage' },
 ];
+
+function applySecondaryDominant(
+  degree: number,
+  diatonicChords: DiatonicChord[],
+  key: NoteName,
+  scale: ScaleType,
+  prevVoicing: number[],
+): Chord | null {
+  const targetDegree = (degree + 1) % 7;
+  const scaleIntervals = SCALE_INTERVALS[scale];
+  const majorIntervals = SCALE_INTERVALS['major'];
+  const targetInterval = (scaleIntervals && targetDegree < scaleIntervals.length)
+    ? scaleIntervals[targetDegree] : majorIntervals[targetDegree];
+  const targetRootIndex = (NOTE_NAMES.indexOf(key) + targetInterval) % 12;
+  const v7Root = NOTE_NAMES[(targetRootIndex + 7) % 12];
+
+  const voicing = voiceLeadChord(prevVoicing, v7Root, 'dominant7');
+  const targetRoman = diatonicChords[targetDegree]?.roman ?? ROMAN_NUMERALS[targetDegree];
+
+  return {
+    root: v7Root,
+    quality: 'dominant7',
+    inversion: 0,
+    voicing,
+    romanNumeral: `V7/${targetRoman}`,
+    duration: 2,
+    startBeat: 0,
+  };
+}
+
+function applyTritoneSub(
+  _degree: number,
+  key: NoteName,
+  scale: ScaleType,
+  prevVoicing: number[],
+): Chord | null {
+  const scaleIntervals = SCALE_INTERVALS[scale];
+  const majorIntervals = SCALE_INTERVALS['major'];
+  const vInterval = (scaleIntervals && scaleIntervals.length > 4) ? scaleIntervals[4] : majorIntervals[4];
+  const vRootIndex = (NOTE_NAMES.indexOf(key) + vInterval) % 12;
+  const tritoneRoot = NOTE_NAMES[(vRootIndex + 6) % 12];
+
+  const voicing = voiceLeadChord(prevVoicing, tritoneRoot, 'dominant7');
+
+  return {
+    root: tritoneRoot,
+    quality: 'dominant7',
+    inversion: 0,
+    voicing,
+    romanNumeral: 'bII7',
+    duration: 2,
+    startBeat: 0,
+  };
+}
 
 export function generateChordProgression(
   key: NoteName,
@@ -142,6 +208,7 @@ export function generateChordProgression(
   measures: number,
   style: string,
   complexity: number,
+  form?: FormSection[],
 ): Chord[] {
   const diatonicChords = getDiatonicChords(scale);
 
@@ -160,6 +227,10 @@ export function generateChordProgression(
     const degree = template.degrees[degreeIndex];
     const diatonic = diatonicChords[degree % diatonicChords.length];
 
+    const sectionIntensity = form
+      ? (form.find(s => measure >= s.startMeasure && measure < s.startMeasure + s.lengthMeasures)?.intensity ?? 0.5)
+      : 0.5;
+
     let quality = diatonic.quality;
     if (complexity >= 5) {
       if (quality === 'major') quality = 'major7';
@@ -169,6 +240,20 @@ export function generateChordProgression(
     if (complexity >= 8 && Math.random() > 0.6) {
       if (quality === 'major7') quality = 'major9';
       else if (quality === 'minor7') quality = 'minor9';
+    }
+    if (complexity >= 9 && Math.random() > 0.7) {
+      if (quality === 'minor9') quality = 'minor11';
+      else if (quality === 'major9') quality = 'major13';
+      else if (quality === 'dominant7') quality = 'dominant13';
+    }
+
+    if (complexity >= 7 && sectionIntensity >= 0.7 && Math.random() > 0.75) {
+      if (quality === 'dominant7') {
+        const altChoice = Math.random();
+        if (altChoice < 0.33) quality = 'altered';
+        else if (altChoice < 0.66) quality = 'dominant7sharp9';
+        else quality = 'dominant7flat9';
+      }
     }
 
     const scaleIntervals = SCALE_INTERVALS[scale];
@@ -195,10 +280,36 @@ export function generateChordProgression(
       });
       currentBeat += halfDuration;
 
-      // passing chord: use the next measure's target as a secondary dominant approach
+      const useSecondaryDom = complexity >= 8 && sectionIntensity >= 0.6 && Math.random() > 0.5;
+      const useTritoneSub = complexity >= 9 && sectionIntensity >= 0.7 && Math.random() > 0.7;
+
+      if (useTritoneSub) {
+        const tritone = applyTritoneSub(degree, key, scale, voicing);
+        if (tritone) {
+          tritone.startBeat = currentBeat;
+          tritone.duration = halfDuration;
+          chords.push(tritone);
+          currentBeat += halfDuration;
+          prevVoicing = tritone.voicing;
+          continue;
+        }
+      }
+
+      if (useSecondaryDom) {
+        const secDom = applySecondaryDominant(degree, diatonicChords, key, scale, voicing);
+        if (secDom) {
+          secDom.startBeat = currentBeat;
+          secDom.duration = halfDuration;
+          chords.push(secDom);
+          currentBeat += halfDuration;
+          prevVoicing = secDom.voicing;
+          continue;
+        }
+      }
+
       const nextDegreeIndex = (measure + 1) % template.degrees.length;
       const nextDegree = template.degrees[nextDegreeIndex];
-      const passingDegree = (nextDegree + 4) % 7; // dominant approach
+      const passingDegree = (nextDegree + 4) % 7;
       const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
       const passingQuality: ChordQuality = complexity >= 5 ? 'dominant7' : 'major';
       const passingInterval = (scaleIntervals && passingDegree < scaleIntervals.length) ? scaleIntervals[passingDegree] : majorIntervals[passingDegree];
@@ -241,6 +352,8 @@ export function chordToString(chord: Chord): string {
     dominant7: '7', major7: 'maj7', minor7: 'm7',
     diminished7: 'dim7', half_diminished7: 'ø7', augmented7: 'aug7',
     sus2: 'sus2', sus4: 'sus4', add9: 'add9', minor9: 'm9', major9: 'maj9',
+    dominant9: '9', minor11: 'm11', major13: 'maj13', dominant13: '13',
+    altered: 'alt', dominant7sharp9: '7#9', dominant7flat9: '7b9',
   };
   return `${chord.root}${qualityStr[chord.quality] ?? ''}`;
 }

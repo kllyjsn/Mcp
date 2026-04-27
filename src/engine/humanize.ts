@@ -1,12 +1,12 @@
 import type { Note, CompositionStyle } from '../types/music';
 
 interface HumanizeOptions {
-  timingJitter: number;     // max beat offset (e.g. 0.02 = subtle, 0.06 = loose)
-  velocitySpread: number;   // random velocity variation range
-  swingAmount: number;      // 0 = straight, 0.5 = hard swing (offbeat delay)
-  driftRate: number;        // slow tempo micro-drift per phrase
-  accentDownbeats: boolean; // slightly louder on beats 1 & 3
-  ghostNoteChance: number;  // probability of converting weak-beat notes to ghost velocity
+  timingJitter: number;
+  velocitySpread: number;
+  swingAmount: number;
+  driftRate: number;
+  accentDownbeats: boolean;
+  ghostNoteChance: number;
 }
 
 const STYLE_HUMANIZE: Record<CompositionStyle, HumanizeOptions> = {
@@ -22,6 +22,8 @@ const STYLE_HUMANIZE: Record<CompositionStyle, HumanizeOptions> = {
   bossa_nova:    { timingJitter: 0.025, velocitySpread: 14, swingAmount: 0.18, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.1 },
   lo_fi:         { timingJitter: 0.04,  velocitySpread: 20, swingAmount: 0.28, driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0.18 },
   gospel:        { timingJitter: 0.02,  velocitySpread: 16, swingAmount: 0.15, driftRate: 0.004, accentDownbeats: true,  ghostNoteChance: 0.08 },
+  afrobeat:      { timingJitter: 0.018, velocitySpread: 12, swingAmount: 0.12, driftRate: 0.003, accentDownbeats: true,  ghostNoteChance: 0.08 },
+  uk_garage:     { timingJitter: 0.022, velocitySpread: 14, swingAmount: 0.35, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.14 },
 };
 
 function gaussianRandom(): number {
@@ -111,15 +113,20 @@ function humanizeDrums(notes: Note[], opts: HumanizeOptions, beatsPerBar: number
     newStart = applySwing(newStart, opts.swingAmount, beatsPerBar);
     newStart = Math.max(0, newStart);
 
-    let newVelocity = note.velocity + Math.round(gaussianRandom() * opts.velocitySpread * 0.7);
+    let newVel = note.velocity + Math.round(gaussianRandom() * opts.velocitySpread * 0.7);
 
-    if (note.pitch === HIHAT_CLOSED) {
-      const isOffbeat = note.startBeat % 1 > 0.3;
-      if (isOffbeat) newVelocity = Math.round(newVelocity * 0.7);
+    if (opts.accentDownbeats) {
+      const barPos = note.startBeat % beatsPerBar;
+      if (barPos < 0.1 && note.pitch === KICK) newVel += 6;
+      if (Math.abs(barPos - 2) < 0.1 && note.pitch === SNARE) newVel += 5;
     }
 
-    newVelocity = Math.max(15, Math.min(127, newVelocity));
+    if (note.pitch === HIHAT_CLOSED && opts.ghostNoteChance > 0 && Math.random() < opts.ghostNoteChance * 1.5) {
+      newVel = Math.round(newVel * 0.5);
+    }
 
-    return { ...note, startBeat: newStart, velocity: newVelocity };
+    newVel = Math.max(15, Math.min(127, newVel));
+
+    return { ...note, startBeat: newStart, velocity: newVel };
   });
 }

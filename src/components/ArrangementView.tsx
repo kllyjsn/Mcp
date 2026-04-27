@@ -85,6 +85,39 @@ export function ArrangementView() {
         </div>
       </div>
 
+      {/* Form sections */}
+      {composition.form.length > 0 && (
+        <div className="flex bg-zinc-900/60 border-b border-zinc-800/50">
+          <div className="w-44 shrink-0 px-3 py-1 border-r border-zinc-800/50">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Form</span>
+          </div>
+          <div className="flex-1 relative" style={{ minWidth: viewWidth }}>
+            <div className="flex h-full">
+              {composition.form.map((section, i) => {
+                const left = (section.startMeasure / composition.params.measures) * 100;
+                const width = (section.lengthMeasures / composition.params.measures) * 100;
+                const intensity = section.intensity;
+                return (
+                  <div
+                    key={i}
+                    className="absolute flex items-center justify-center border-r border-zinc-700/30 text-[10px] font-mono"
+                    style={{
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      height: '100%',
+                      backgroundColor: `rgba(200, 169, 126, ${intensity * 0.15})`,
+                    }}
+                    title={`${section.type} — intensity ${Math.round(intensity * 100)}% — ${section.activeTracks.join(', ')}`}
+                  >
+                    <span className="text-amber-400/70 font-semibold uppercase">{section.type}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tracks */}
       {composition.tracks.map((track, trackIndex) => (
         <motion.div

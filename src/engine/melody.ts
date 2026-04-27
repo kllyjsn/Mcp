@@ -524,6 +524,12 @@ export function generateDrumPattern(
   if (params.style === 'lo_fi') {
     return generateLoFiDrums(params);
   }
+  if (params.style === 'afrobeat') {
+    return generateAfrobeatDrums(params);
+  }
+  if (params.style === 'uk_garage') {
+    return generateUKGarageDrums(params);
+  }
 
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
@@ -698,6 +704,108 @@ function generateLoFiDrums(params: CompositionParams): Note[] {
 
     if (Math.random() > 0.93 && params.rhythmicVariety >= 5) {
       notes.push({ pitch: SNARE, velocity: 30 + Math.floor(Math.random() * 15), duration: 0.1, startBeat: beat });
+    }
+  }
+
+  return notes;
+}
+
+function generateAfrobeatDrums(params: CompositionParams): Note[] {
+  const notes: Note[] = [];
+  const KICK = 36;
+  const SNARE = 38;
+  const HIHAT_CLOSED = 42;
+  const HIHAT_OPEN = 46;
+  const RIDE = 51;
+
+  for (let measure = 0; measure < params.measures; measure++) {
+    const base = measure * params.timeSignature[0];
+
+    // Polyrhythmic bell pattern (12/8 feel in 4/4)
+    const bellPattern = [0, 0.75, 1.5, 2, 2.75, 3.5];
+    for (const offset of bellPattern) {
+      notes.push({ pitch: RIDE, velocity: 65 + Math.floor(Math.random() * 15), duration: 0.25, startBeat: base + offset });
+    }
+
+    // Kick on 1 and the "and" of 3
+    notes.push({ pitch: KICK, velocity: 95, duration: 0.3, startBeat: base });
+    notes.push({ pitch: KICK, velocity: 75, duration: 0.25, startBeat: base + 2.5 });
+    if (params.rhythmicVariety >= 5 && Math.random() > 0.5) {
+      notes.push({ pitch: KICK, velocity: 65, duration: 0.2, startBeat: base + 1.75 });
+    }
+
+    // Snare on 2 and 4 with ghost notes
+    notes.push({ pitch: SNARE, velocity: 85, duration: 0.2, startBeat: base + 1 });
+    notes.push({ pitch: SNARE, velocity: 90, duration: 0.2, startBeat: base + 3 });
+    if (params.rhythmicVariety >= 4 && Math.random() > 0.5) {
+      notes.push({ pitch: SNARE, velocity: 35, duration: 0.1, startBeat: base + 0.75 });
+    }
+    if (params.rhythmicVariety >= 6 && Math.random() > 0.6) {
+      notes.push({ pitch: SNARE, velocity: 40, duration: 0.1, startBeat: base + 3.5 });
+    }
+
+    // Hi-hats filling the gaps
+    for (let eighth = 0; eighth < 8; eighth++) {
+      const beat = base + eighth * 0.5;
+      const isOpen = eighth === 7 && Math.random() > 0.4;
+      notes.push({
+        pitch: isOpen ? HIHAT_OPEN : HIHAT_CLOSED,
+        velocity: eighth % 2 === 0 ? 50 : 35,
+        duration: isOpen ? 0.25 : 0.12,
+        startBeat: beat,
+      });
+    }
+  }
+
+  return notes;
+}
+
+function generateUKGarageDrums(params: CompositionParams): Note[] {
+  const notes: Note[] = [];
+  const totalBeats = params.measures * params.timeSignature[0];
+  const KICK = 36;
+  const SNARE = 38;
+  const HIHAT_CLOSED = 42;
+  const HIHAT_OPEN = 46;
+
+  for (let beat = 0; beat < totalBeats; beat += 0.25) {
+    const barBeat = beat % params.timeSignature[0];
+
+    // 2-step kick: emphasise beat 1, skip beat 3 sometimes
+    if (Math.abs(barBeat) < 0.05) {
+      notes.push({ pitch: KICK, velocity: 95, duration: 0.2, startBeat: beat });
+    }
+    if (Math.abs(barBeat - 1.75) < 0.05 && Math.random() > 0.3) {
+      notes.push({ pitch: KICK, velocity: 75, duration: 0.15, startBeat: beat });
+    }
+    if (Math.abs(barBeat - 2.5) < 0.05 && Math.random() > 0.5) {
+      notes.push({ pitch: KICK, velocity: 70, duration: 0.15, startBeat: beat });
+    }
+
+    // Snare on 2 and ghost on "and" of 4
+    if (Math.abs(barBeat - 1) < 0.05) {
+      notes.push({ pitch: SNARE, velocity: 85, duration: 0.2, startBeat: beat });
+    }
+    if (Math.abs(barBeat - 3) < 0.05) {
+      notes.push({ pitch: SNARE, velocity: 80 + Math.floor(Math.random() * 10), duration: 0.2, startBeat: beat });
+    }
+    if (Math.abs(barBeat - 3.5) < 0.05 && params.rhythmicVariety >= 5 && Math.random() > 0.5) {
+      notes.push({ pitch: SNARE, velocity: 40, duration: 0.1, startBeat: beat });
+    }
+
+    // Shuffled hi-hats — skip some 16ths for the "2-step" feel
+    if (beat % 0.25 === 0 && params.rhythmicVariety >= 2) {
+      const posIn16th = Math.round(barBeat * 4) % 4;
+      const skip = posIn16th === 2 && Math.random() > 0.4;
+      if (!skip) {
+        const isOpen = Math.abs(barBeat - 3.75) < 0.05 && Math.random() > 0.5;
+        notes.push({
+          pitch: isOpen ? HIHAT_OPEN : HIHAT_CLOSED,
+          velocity: posIn16th === 0 ? 55 : 30 + Math.floor(Math.random() * 15),
+          duration: isOpen ? 0.2 : 0.08,
+          startBeat: beat,
+        });
+      }
     }
   }
 

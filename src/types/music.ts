@@ -10,7 +10,9 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'minor11' | 'major13' | 'dominant13'
+  | 'altered' | 'dominant7sharp9' | 'dominant7flat9';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -18,6 +20,7 @@ export interface Note {
   duration: number;    // in beats
   startBeat: number;
   noteName?: string;
+  ornament?: 'grace' | 'mordent' | 'turn' | 'appoggiatura';
 }
 
 export interface Chord {
@@ -34,6 +37,16 @@ export interface MelodyContour {
   direction: 'ascending' | 'descending' | 'arch' | 'wave' | 'static';
   range: number;       // in semitones
   density: number;     // notes per beat (0.5 = half notes, 2 = eighth notes)
+}
+
+export type SectionType = 'intro' | 'A' | 'B' | 'bridge' | 'climax' | 'outro';
+
+export interface FormSection {
+  type: SectionType;
+  startMeasure: number;
+  lengthMeasures: number;
+  intensity: number;       // 0-1, controls textural density and dynamics
+  activeTracks: string[];  // which track names are active in this section
 }
 
 export interface CompositionParams {
@@ -54,7 +67,8 @@ export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'lo_fi' | 'gospel';
+  | 'bossa_nova' | 'lo_fi' | 'gospel'
+  | 'afrobeat' | 'uk_garage';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -76,10 +90,11 @@ export type InstrumentType =
   | 'bells' | 'brass' | 'woodwind' | 'drums'
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
-  | 'vibraphone' | 'clavinet' | 'tape_keys';
+  | 'vibraphone' | 'clavinet' | 'tape_keys'
+  | 'warm_pad' | 'sub_bass' | 'kalimba' | 'marimba';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'autofilter' | 'widener';
   wet: number;
   params: Record<string, number>;
 }
@@ -90,6 +105,7 @@ export interface Composition {
   params: CompositionParams;
   tracks: Track[];
   chordProgression: Chord[];
+  form: FormSection[];
   createdAt: number;
 }
 
