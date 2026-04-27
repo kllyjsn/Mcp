@@ -81,7 +81,8 @@ export type InstrumentType =
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'vibraphone' | 'celeste' | 'cello'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
-  | 'clavinet' | 'tape_keys';
+  | 'clavinet' | 'tape_keys'
+  | 'sub_bass' | 'warm_pad';
 
 export interface TrackEffect {
   type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
@@ -95,6 +96,8 @@ export interface Composition {
   params: CompositionParams;
   tracks: Track[];
   chordProgression: Chord[];
+  sections: Section[];
+  tensionCurve: TensionCurve;
   createdAt: number;
 }
 
@@ -106,7 +109,33 @@ export interface TransportState {
   loopEnd: number;
 }
 
+
 export type TimeSignaturePreset = {
   value: [number, number];
   label: string;
 };
+
+// ---------------------------------------------------------------------------
+// Section / Arrangement intelligence
+// ---------------------------------------------------------------------------
+
+export type SectionKind = 'intro' | 'verse' | 'build' | 'climax' | 'breakdown' | 'outro';
+
+export interface Section {
+  kind: SectionKind;
+  startMeasure: number;
+  lengthMeasures: number;
+  trackPresence: Record<string, number>;
+  tension: number;
+}
+
+// ---------------------------------------------------------------------------
+// Tension / Release arc
+// ---------------------------------------------------------------------------
+
+export interface TensionPoint {
+  beat: number;
+  tension: number;
+}
+
+export type TensionCurve = TensionPoint[];

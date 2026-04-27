@@ -2,6 +2,8 @@ import type { Composition, CompositionParams, CompositionStyle, InstrumentType, 
 import { generateChordProgression } from './chords';
 import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern, generateCountermelody } from './melody';
 import { humanizeTrack } from './humanize';
+import { generateSections } from './sections';
+import { generateTensionCurve, getTensionAtBeat } from './tension';
 
 const TRACK_COLORS: Record<string, string> = {
   melody: '#C8A97E',
@@ -188,6 +190,9 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
 export function compose(params: CompositionParams): Composition {
   const beatsPerBar = params.timeSignature[0];
 
+  const sections = generateSections(params.style, params.measures);
+  const tensionCurve = generateTensionCurve(sections, beatsPerBar);
+
   const chords = generateChordProgression(
     params.key,
     params.scale,
@@ -195,6 +200,10 @@ export function compose(params: CompositionParams): Composition {
     params.style,
     params.harmonicComplexity,
     beatsPerBar,
+    (measure: number) => {
+      const beat = measure * beatsPerBar;
+      return getTensionAtBeat(tensionCurve, beat);
+    },
   );
 
   const sv = STYLE_VOICINGS[params.style];
@@ -288,6 +297,8 @@ export function compose(params: CompositionParams): Composition {
     params,
     tracks,
     chordProgression: chords,
+    sections,
+    tensionCurve,
     createdAt: Date.now(),
   };
 }
