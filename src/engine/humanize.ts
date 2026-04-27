@@ -7,21 +7,24 @@ interface HumanizeOptions {
   driftRate: number;        // slow tempo micro-drift per phrase
   accentDownbeats: boolean; // slightly louder on beats 1 & 3
   ghostNoteChance: number;  // probability of converting weak-beat notes to ghost velocity
+  rubato: number;           // 0 = metronomic, 0.05 = romantic push/pull
+  breathPhraseLen: number;  // natural phrasing breath every N beats (0 = disabled)
+  laidBack: number;         // 0 = on top, 0.03 = behind the beat (pocket feel)
 }
 
 const STYLE_HUMANIZE: Record<CompositionStyle, HumanizeOptions> = {
-  classical:     { timingJitter: 0.012, velocitySpread: 8,  swingAmount: 0,    driftRate: 0.003, accentDownbeats: true,  ghostNoteChance: 0 },
-  romantic:      { timingJitter: 0.02,  velocitySpread: 14, swingAmount: 0,    driftRate: 0.006, accentDownbeats: true,  ghostNoteChance: 0 },
-  impressionist: { timingJitter: 0.025, velocitySpread: 12, swingAmount: 0,    driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0 },
-  jazz:          { timingJitter: 0.03,  velocitySpread: 18, swingAmount: 0.33, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.15 },
-  neo_soul:      { timingJitter: 0.035, velocitySpread: 16, swingAmount: 0.25, driftRate: 0.005, accentDownbeats: false, ghostNoteChance: 0.12 },
-  ambient:       { timingJitter: 0.04,  velocitySpread: 10, swingAmount: 0,    driftRate: 0.01,  accentDownbeats: false, ghostNoteChance: 0 },
-  minimalist:    { timingJitter: 0.008, velocitySpread: 6,  swingAmount: 0,    driftRate: 0.002, accentDownbeats: false, ghostNoteChance: 0 },
-  cinematic:     { timingJitter: 0.018, velocitySpread: 12, swingAmount: 0,    driftRate: 0.005, accentDownbeats: true,  ghostNoteChance: 0 },
-  electronic:    { timingJitter: 0.005, velocitySpread: 4,  swingAmount: 0,    driftRate: 0.001, accentDownbeats: false, ghostNoteChance: 0 },
-  bossa_nova:    { timingJitter: 0.025, velocitySpread: 14, swingAmount: 0.18, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.1 },
-  lo_fi:         { timingJitter: 0.04,  velocitySpread: 20, swingAmount: 0.28, driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0.18 },
-  gospel:        { timingJitter: 0.02,  velocitySpread: 16, swingAmount: 0.15, driftRate: 0.004, accentDownbeats: true,  ghostNoteChance: 0.08 },
+  classical:     { timingJitter: 0.012, velocitySpread: 8,  swingAmount: 0,    driftRate: 0.003, accentDownbeats: true,  ghostNoteChance: 0,    rubato: 0.02,  breathPhraseLen: 8,  laidBack: 0 },
+  romantic:      { timingJitter: 0.02,  velocitySpread: 14, swingAmount: 0,    driftRate: 0.006, accentDownbeats: true,  ghostNoteChance: 0,    rubato: 0.045, breathPhraseLen: 4,  laidBack: 0 },
+  impressionist: { timingJitter: 0.025, velocitySpread: 12, swingAmount: 0,    driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0,    rubato: 0.035, breathPhraseLen: 8,  laidBack: 0.01 },
+  jazz:          { timingJitter: 0.03,  velocitySpread: 18, swingAmount: 0.33, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.15, rubato: 0.01,  breathPhraseLen: 0,  laidBack: 0.02 },
+  neo_soul:      { timingJitter: 0.035, velocitySpread: 16, swingAmount: 0.25, driftRate: 0.005, accentDownbeats: false, ghostNoteChance: 0.12, rubato: 0,     breathPhraseLen: 0,  laidBack: 0.025 },
+  ambient:       { timingJitter: 0.04,  velocitySpread: 10, swingAmount: 0,    driftRate: 0.01,  accentDownbeats: false, ghostNoteChance: 0,    rubato: 0.05,  breathPhraseLen: 16, laidBack: 0 },
+  minimalist:    { timingJitter: 0.008, velocitySpread: 6,  swingAmount: 0,    driftRate: 0.002, accentDownbeats: false, ghostNoteChance: 0,    rubato: 0.005, breathPhraseLen: 0,  laidBack: 0 },
+  cinematic:     { timingJitter: 0.018, velocitySpread: 12, swingAmount: 0,    driftRate: 0.005, accentDownbeats: true,  ghostNoteChance: 0,    rubato: 0.03,  breathPhraseLen: 8,  laidBack: 0 },
+  electronic:    { timingJitter: 0.005, velocitySpread: 4,  swingAmount: 0,    driftRate: 0.001, accentDownbeats: false, ghostNoteChance: 0,    rubato: 0,     breathPhraseLen: 0,  laidBack: 0 },
+  bossa_nova:    { timingJitter: 0.025, velocitySpread: 14, swingAmount: 0.18, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.1,  rubato: 0.015, breathPhraseLen: 0,  laidBack: 0.015 },
+  lo_fi:         { timingJitter: 0.04,  velocitySpread: 20, swingAmount: 0.28, driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0.18, rubato: 0.01,  breathPhraseLen: 0,  laidBack: 0.03 },
+  gospel:        { timingJitter: 0.02,  velocitySpread: 16, swingAmount: 0.15, driftRate: 0.004, accentDownbeats: true,  ghostNoteChance: 0.08, rubato: 0.01,  breathPhraseLen: 0,  laidBack: 0.01 },
 };
 
 function gaussianRandom(): number {
@@ -60,13 +63,23 @@ export function humanizeTrack(
   }
 
   let phraseDrift = 0;
+  const rubatoPhase = Math.random() * Math.PI * 2;
 
   return notes.map((note, i) => {
     if (i % 16 === 0) {
       phraseDrift = gaussianRandom() * opts.driftRate;
     }
 
-    let newStart = note.startBeat + gaussianRandom() * opts.timingJitter + phraseDrift;
+    // Rubato — gentle push/pull that follows a sinusoidal curve over phrases
+    let rubatoOffset = 0;
+    if (opts.rubato > 0) {
+      const phrasePos = opts.breathPhraseLen > 0
+        ? (note.startBeat % opts.breathPhraseLen) / opts.breathPhraseLen
+        : note.startBeat / (beatsPerBar * 4);
+      rubatoOffset = Math.sin(phrasePos * Math.PI * 2 + rubatoPhase) * opts.rubato;
+    }
+
+    let newStart = note.startBeat + gaussianRandom() * opts.timingJitter + phraseDrift + rubatoOffset + opts.laidBack;
     newStart = applySwing(newStart, opts.swingAmount, beatsPerBar);
     newStart = Math.max(0, newStart);
 
@@ -76,6 +89,15 @@ export function humanizeTrack(
       const barPos = note.startBeat % beatsPerBar;
       if (barPos < 0.1) newVelocity += 8;
       else if (Math.abs(barPos - 2) < 0.1) newVelocity += 4;
+    }
+
+    // Phrase breathing — slight diminuendo at phrase boundaries
+    if (opts.breathPhraseLen > 0) {
+      const posInPhrase = note.startBeat % opts.breathPhraseLen;
+      const nearEnd = posInPhrase > opts.breathPhraseLen * 0.85;
+      if (nearEnd) {
+        newVelocity = Math.round(newVelocity * 0.88);
+      }
     }
 
     if (opts.ghostNoteChance > 0) {
