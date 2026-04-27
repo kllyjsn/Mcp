@@ -10,30 +10,55 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'minor11' | 'major11' | 'dominant11'
+  | 'minor13' | 'major13' | 'dominant13'
+  | 'altered' | 'dominant7sharp9' | 'dominant7flat9'
+  | 'dominant7sharp11' | 'minorMajor7';
+
+export type Articulation = 'normal' | 'staccato' | 'legato' | 'accent' | 'tenuto' | 'marcato' | 'portamento';
 
 export interface Note {
-  pitch: number;       // MIDI note number 0-127
-  velocity: number;    // 0-127
-  duration: number;    // in beats
+  pitch: number;
+  velocity: number;
+  duration: number;
   startBeat: number;
   noteName?: string;
+  articulation?: Articulation;
 }
 
 export interface Chord {
   root: NoteName;
   quality: ChordQuality;
   inversion: number;
-  voicing: number[];   // MIDI pitches
+  voicing: number[];
   romanNumeral: string;
   duration: number;
   startBeat: number;
+  function?: ChordFunction;
+  tension?: number;
 }
+
+export type ChordFunction =
+  | 'tonic' | 'subdominant' | 'dominant'
+  | 'secondary_dominant' | 'borrowed' | 'neapolitan'
+  | 'augmented_sixth' | 'tritone_sub' | 'chromatic_mediant'
+  | 'passing' | 'pedal';
 
 export interface MelodyContour {
   direction: 'ascending' | 'descending' | 'arch' | 'wave' | 'static';
-  range: number;       // in semitones
-  density: number;     // notes per beat (0.5 = half notes, 2 = eighth notes)
+  range: number;
+  density: number;
+}
+
+export type SectionType = 'intro' | 'A' | 'B' | 'A_prime' | 'bridge' | 'climax' | 'outro' | 'development';
+
+export interface FormSection {
+  type: SectionType;
+  startMeasure: number;
+  length: number;
+  intensity: number;
+  label: string;
 }
 
 export interface CompositionParams {
@@ -44,17 +69,18 @@ export interface CompositionParams {
   measures: number;
   style: CompositionStyle;
   dynamics: DynamicCurve;
-  harmonicComplexity: number;  // 1-10
-  melodicDensity: number;      // 1-10
-  rhythmicVariety: number;     // 1-10
-  expressiveness: number;      // 1-10
+  harmonicComplexity: number;
+  melodicDensity: number;
+  rhythmicVariety: number;
+  expressiveness: number;
 }
 
 export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'lo_fi' | 'gospel';
+  | 'bossa_nova' | 'lo_fi' | 'gospel'
+  | 'late_romantic' | 'post_bop' | 'chamber' | 'film_noir';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -63,8 +89,8 @@ export interface Track {
   name: string;
   instrument: InstrumentType;
   notes: Note[];
-  volume: number;     // 0-1
-  pan: number;        // -1 to 1
+  volume: number;
+  pan: number;
   muted: boolean;
   solo: boolean;
   color: string;
@@ -77,13 +103,21 @@ export type InstrumentType =
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
   | 'vibraphone' | 'clavinet' | 'tape_keys'
-  | 'sub_bass' | 'warm_pad';
+  | 'sub_bass' | 'warm_pad'
+  | 'concert_grand' | 'chamber_strings' | 'warm_rhodes'
+  | 'analog_pad' | 'celesta' | 'muted_trumpet'
+  | 'soft_clarinet' | 'fingered_bass';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: EffectType;
   wet: number;
   params: Record<string, number>;
 }
+
+export type EffectType =
+  | 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor'
+  | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher'
+  | 'tape_saturation' | 'stereo_widener' | 'auto_pan';
 
 export interface Composition {
   id: string;
@@ -93,6 +127,7 @@ export interface Composition {
   chordProgression: Chord[];
   sections: Section[];
   tensionCurve: TensionCurve;
+  form?: FormSection[];
   createdAt: number;
 }
 
@@ -114,9 +149,7 @@ export interface Section {
   kind: SectionKind;
   startMeasure: number;
   lengthMeasures: number;
-  /** Per-track presence: 0 = silent, 0.5 = sparse/textural, 1 = full */
   trackPresence: Record<string, number>;
-  /** 0-1 tension level for this section */
   tension: number;
 }
 
@@ -130,3 +163,10 @@ export interface TensionPoint {
 }
 
 export type TensionCurve = TensionPoint[];
+
+export interface ListeningRoomPreset {
+  name: string;
+  description: string;
+  params: Partial<CompositionParams>;
+  category: 'jazz_club' | 'concert_hall' | 'salon' | 'late_night' | 'studio';
+}

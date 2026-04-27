@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church } from 'lucide-react';
+import { LISTENING_ROOM_PRESETS } from '../engine/presets';
+import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church, Crown, Flame, Theater, Moon, Bookmark } from 'lucide-react';
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -23,12 +25,16 @@ const SCALES: { value: ScaleType; label: string }[] = [
 const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] = [
   { value: 'classical', label: 'Classical', icon: Music },
   { value: 'romantic', label: 'Romantic', icon: Heart },
+  { value: 'late_romantic', label: 'Late Romantic', icon: Crown },
   { value: 'impressionist', label: 'Impressionist', icon: Waves },
+  { value: 'chamber', label: 'Chamber', icon: Theater },
   { value: 'jazz', label: 'Jazz', icon: Sparkles },
+  { value: 'post_bop', label: 'Post-Bop', icon: Flame },
   { value: 'neo_soul', label: 'Neo Soul', icon: Sparkles },
   { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
   { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
   { value: 'gospel', label: 'Gospel', icon: Church },
+  { value: 'film_noir', label: 'Film Noir', icon: Moon },
   { value: 'ambient', label: 'Ambient', icon: Waves },
   { value: 'minimalist', label: 'Minimalist', icon: Zap },
   { value: 'cinematic', label: 'Cinematic', icon: Music },
@@ -42,6 +48,14 @@ const DYNAMICS: { value: DynamicCurve; label: string }[] = [
   { value: 'terraced', label: 'Terraced' },
   { value: 'flat', label: 'Flat' },
   { value: 'dramatic', label: 'Dramatic' },
+];
+
+const PRESET_CATEGORIES = [
+  { key: 'jazz_club' as const, label: 'Jazz Club' },
+  { key: 'concert_hall' as const, label: 'Concert Hall' },
+  { key: 'salon' as const, label: 'Salon' },
+  { key: 'late_night' as const, label: 'Late Night' },
+  { key: 'studio' as const, label: 'Studio' },
 ];
 
 function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
@@ -74,10 +88,80 @@ function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
 
 export function CompositionPanel() {
   const { params, setParam } = useStore();
+  const [showPresets, setShowPresets] = useState(false);
+  const [presetCategory, setPresetCategory] = useState<typeof PRESET_CATEGORIES[number]['key']>('jazz_club');
+
+  function applyPreset(preset: typeof LISTENING_ROOM_PRESETS[number]) {
+    const p = preset.params;
+    if (p.key) setParam('key', p.key);
+    if (p.scale) setParam('scale', p.scale);
+    if (p.tempo) setParam('tempo', p.tempo);
+    if (p.style) setParam('style', p.style);
+    if (p.dynamics) setParam('dynamics', p.dynamics);
+    if (p.harmonicComplexity) setParam('harmonicComplexity', p.harmonicComplexity);
+    if (p.melodicDensity) setParam('melodicDensity', p.melodicDensity);
+    if (p.rhythmicVariety) setParam('rhythmicVariety', p.rhythmicVariety);
+    if (p.expressiveness) setParam('expressiveness', p.expressiveness);
+    if (p.measures) setParam('measures', p.measures);
+    setShowPresets(false);
+  }
+
+  const filteredPresets = LISTENING_ROOM_PRESETS.filter(p => p.category === presetCategory);
 
   return (
     <div className="w-72 bg-zinc-900/60 border-r border-zinc-800/50 overflow-y-auto custom-scrollbar">
       <div className="p-4 space-y-5">
+        {/* Presets toggle */}
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+            showPresets
+              ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
+              : 'bg-zinc-800/60 text-zinc-300 border border-zinc-700/40 hover:bg-zinc-800 hover:text-amber-400'
+          }`}
+        >
+          <Bookmark size={13} />
+          Listening Room Presets
+        </button>
+
+        {showPresets && (
+          <div className="space-y-3 animate-in fade-in">
+            <div className="flex flex-wrap gap-1">
+              {PRESET_CATEGORIES.map(cat => (
+                <button
+                  key={cat.key}
+                  onClick={() => setPresetCategory(cat.key)}
+                  className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+                    presetCategory === cat.key
+                      ? 'bg-amber-600/20 text-amber-400'
+                      : 'bg-zinc-800/40 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
+              {filteredPresets.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => applyPreset(preset)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:bg-zinc-800/60 hover:border-amber-600/20 transition-all group"
+                >
+                  <div className="text-xs text-zinc-200 font-medium group-hover:text-amber-400 transition-colors">
+                    {preset.name}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5 leading-tight">
+                    {preset.description}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="h-px bg-zinc-800/50" />
+
         <div>
           <h3 className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3 flex items-center gap-2">
             <Music size={12} /> Tonality

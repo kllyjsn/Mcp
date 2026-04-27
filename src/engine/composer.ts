@@ -5,6 +5,9 @@ import { humanizeTrack } from './humanize';
 import { generateSections } from './sections';
 import { generateTensionCurve, getTensionAtBeat } from './tension';
 import { generateCounterMelody } from './countermelody';
+import { enrichChordProgression } from './harmony';
+import { applyCounterpointRules, applyArticulations, applyCadentialMelody } from './counterpoint';
+import { generateForm } from './form';
 
 const TRACK_COLORS: Record<string, string> = {
   melody: '#C8A97E',
@@ -161,6 +164,47 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }, { type: 'reverb', wet: 0.1, params: { decay: 2 } }],
     melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.35, drumsVol: 0.55,
   },
+  // --- New styles ---
+  late_romantic: {
+    melody: 'concert_grand', harmony: 'chamber_strings', bass: 'fingered_bass', arpeggio: 'celesta', counter: 'chamber_strings',
+    melodyFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4.5 } }, { type: 'tape_saturation', wet: 0.08, params: { amount: 0.15 } }],
+    harmonyFx: [{ type: 'reverb', wet: 0.55, params: { decay: 6 } }, { type: 'chorus', wet: 0.2, params: { frequency: 0.8, depth: 0.6 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 3 } }, { type: 'reverb', wet: 0.12, params: { decay: 2 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.45, params: { decay: 5 } }, { type: 'delay', wet: 0.2, params: { delayTime: 0.5, feedback: 0.25 } }],
+    counterFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }],
+    drumsFx: [{ type: 'reverb', wet: 0.25, params: { decay: 3.5 } }],
+    melodyVol: 0.85, harmonyVol: 0.6, bassVol: 0.62, arpeggioVol: 0.3, counterVol: 0.3, drumsVol: 0.3,
+  },
+  post_bop: {
+    melody: 'warm_rhodes', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'warm_rhodes',
+    melodyFx: [{ type: 'reverb', wet: 0.18, params: { decay: 1.8 } }, { type: 'tape_saturation', wet: 0.1, params: { amount: 0.2 } }],
+    harmonyFx: [{ type: 'tremolo', wet: 0.1, params: { frequency: 4, depth: 0.25 } }, { type: 'reverb', wet: 0.22, params: { decay: 2.2 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }, { type: 'eq', wet: 1, params: { low: 4, mid: 1, high: -5 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }, { type: 'tremolo', wet: 0.12, params: { frequency: 5, depth: 0.2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'tape_saturation', wet: 0.08, params: { amount: 0.15 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'reverb', wet: 0.15, params: { decay: 1.8 } }],
+    melodyVol: 0.8, harmonyVol: 0.48, bassVol: 0.74, arpeggioVol: 0.28, counterVol: 0.32, drumsVol: 0.55,
+  },
+  chamber: {
+    melody: 'chamber_strings', harmony: 'chamber_strings', bass: 'fingered_bass', arpeggio: 'celesta', counter: 'chamber_strings',
+    melodyFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    harmonyFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3.5 } }, { type: 'chorus', wet: 0.1, params: { frequency: 1, depth: 0.3 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 3 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3.5 } }],
+    counterFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2 } }, { type: 'reverb', wet: 0.15, params: { decay: 2 } }],
+    melodyVol: 0.78, harmonyVol: 0.6, bassVol: 0.62, arpeggioVol: 0.32, counterVol: 0.28, drumsVol: 0.3,
+  },
+  film_noir: {
+    melody: 'muted_trumpet', harmony: 'warm_rhodes', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'soft_clarinet',
+    melodyFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'tape_saturation', wet: 0.15, params: { amount: 0.25 } }],
+    harmonyFx: [{ type: 'tremolo', wet: 0.12, params: { frequency: 3, depth: 0.3 } }, { type: 'reverb', wet: 0.35, params: { decay: 4 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 0, high: -4 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }, { type: 'delay', wet: 0.2, params: { delayTime: 0.375, feedback: 0.25 } }],
+    counterFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3.5 } }, { type: 'tape_saturation', wet: 0.1, params: { amount: 0.2 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2.5 } }, { type: 'reverb', wet: 0.2, params: { decay: 2.5 } }],
+    melodyVol: 0.8, harmonyVol: 0.45, bassVol: 0.72, arpeggioVol: 0.25, counterVol: 0.3, drumsVol: 0.48,
+  },
 };
 
 export function compose(params: CompositionParams): Composition {
@@ -173,7 +217,7 @@ export function compose(params: CompositionParams): Composition {
     return getTensionAtBeat(tensionCurve, beat);
   };
 
-  const chords = generateChordProgression(
+  let chords = generateChordProgression(
     params.key,
     params.scale,
     params.measures,
@@ -182,13 +226,20 @@ export function compose(params: CompositionParams): Composition {
     tensionAtMeasure,
   );
 
+  chords = enrichChordProgression(chords, params.key, params.scale, params.style, params.harmonicComplexity);
+
+  const form = generateForm(params);
   const sv = STYLE_VOICINGS[params.style];
 
-  const melodyNotes = humanizeTrack(
-    generateMelody(params, chords, [4, 6], sections, tensionCurve),
-    params.style, 'Melody', beatsPerBar,
-  );
-  const bassNotes = humanizeTrack(generateBassLine(params, chords), params.style, 'Bass', beatsPerBar);
+  let melodyNotes = generateMelody(params, chords, [4, 6], sections, tensionCurve);
+  let bassNotes = generateBassLine(params, chords);
+
+  melodyNotes = applyCounterpointRules(melodyNotes, bassNotes, params);
+  melodyNotes = applyArticulations(melodyNotes, params, chords);
+  melodyNotes = applyCadentialMelody(melodyNotes, chords, params);
+
+  melodyNotes = humanizeTrack(melodyNotes, params.style, 'Melody', beatsPerBar);
+  bassNotes = humanizeTrack(bassNotes, params.style, 'Bass', beatsPerBar);
   const padNotes = humanizeTrack(generatePadVoicings(params, chords), params.style, 'Harmony', beatsPerBar);
   const arpeggioNotes = humanizeTrack(generateArpeggio(params, chords), params.style, 'Arpeggio', beatsPerBar);
   const rawDrums = generateDrumPattern(params);
@@ -282,6 +333,7 @@ export function compose(params: CompositionParams): Composition {
     chordProgression: chords,
     sections,
     tensionCurve,
+    form,
     createdAt: Date.now(),
   };
 }
@@ -307,6 +359,15 @@ export function recomposeTrack(
       break;
     }
     default: newNotes = generateMelody(params, chordProgression);
+  }
+
+  if (track.name === 'Melody') {
+    const bassTrack = composition.tracks.find(t => t.name === 'Bass');
+    if (bassTrack) {
+      newNotes = applyCounterpointRules(newNotes, bassTrack.notes, params);
+    }
+    newNotes = applyArticulations(newNotes, params, chordProgression);
+    newNotes = applyCadentialMelody(newNotes, chordProgression, params);
   }
 
   newNotes = humanizeTrack(newNotes, params.style, track.name, beatsPerBar);

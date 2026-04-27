@@ -17,6 +17,18 @@ export const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
   add9:              [0, 4, 7, 14],
   minor9:            [0, 3, 7, 10, 14],
   major9:            [0, 4, 7, 11, 14],
+  dominant9:         [0, 4, 7, 10, 14],
+  minor11:           [0, 3, 7, 10, 14, 17],
+  major11:           [0, 4, 7, 11, 14, 17],
+  dominant11:        [0, 4, 7, 10, 14, 17],
+  minor13:           [0, 3, 7, 10, 14, 21],
+  major13:           [0, 4, 7, 11, 14, 21],
+  dominant13:        [0, 4, 7, 10, 14, 21],
+  altered:           [0, 4, 8, 10, 13],
+  dominant7sharp9:   [0, 4, 7, 10, 15],
+  dominant7flat9:    [0, 4, 7, 10, 13],
+  dominant7sharp11:  [0, 4, 7, 10, 14, 18],
+  minorMajor7:       [0, 3, 7, 11],
 };
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
@@ -134,6 +146,22 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   { name: 'Gospel I-IV-I-V', degrees: [0, 3, 0, 4], style: 'gospel' },
   { name: 'Gospel I-iii-IV-V-I', degrees: [0, 2, 3, 4, 0], style: 'gospel' },
   { name: 'Gospel IV-V-iii-vi', degrees: [3, 4, 2, 5], style: 'gospel' },
+  // Late Romantic — chromatic movement, rich modulation
+  { name: 'Late Romantic I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'late_romantic' },
+  { name: 'Late Romantic I-III-vi-IV', degrees: [0, 2, 5, 3], style: 'late_romantic' },
+  { name: 'Late Romantic i-VI-iv-V', degrees: [0, 5, 3, 4], style: 'late_romantic' },
+  // Post-bop — angular, quartal movement
+  { name: 'Post-Bop ii-V-I-IV', degrees: [1, 4, 0, 3], style: 'post_bop' },
+  { name: 'Post-Bop iii-vi-ii-V', degrees: [2, 5, 1, 4], style: 'post_bop' },
+  { name: 'Post-Bop I-bVII-IV-i', degrees: [0, 6, 3, 0], style: 'post_bop' },
+  // Chamber — classical elegance, smooth motion
+  { name: 'Chamber I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'chamber' },
+  { name: 'Chamber I-ii-V-I', degrees: [0, 1, 4, 0], style: 'chamber' },
+  { name: 'Chamber I-IV-vii-iii-vi', degrees: [0, 3, 6, 2, 5], style: 'chamber' },
+  // Film noir — dark, mysterious, unresolved
+  { name: 'Noir i-bVI-bVII-i', degrees: [0, 5, 6, 0], style: 'film_noir' },
+  { name: 'Noir i-iv-V-bVI', degrees: [0, 3, 4, 5], style: 'film_noir' },
+  { name: 'Noir i-bII-V-i', degrees: [0, 1, 4, 0], style: 'film_noir' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -305,6 +333,10 @@ export function chordToString(chord: Chord): string {
     dominant7: '7', major7: 'maj7', minor7: 'm7',
     diminished7: 'dim7', half_diminished7: 'ø7', augmented7: 'aug7',
     sus2: 'sus2', sus4: 'sus4', add9: 'add9', minor9: 'm9', major9: 'maj9',
+    dominant9: '9', minor11: 'm11', major11: 'maj11', dominant11: '11',
+    minor13: 'm13', major13: 'maj13', dominant13: '13',
+    altered: 'alt', dominant7sharp9: '7♯9', dominant7flat9: '7♭9',
+    dominant7sharp11: '7♯11', minorMajor7: 'm(maj7)',
   };
   return `${chord.root}${qualityStr[chord.quality] ?? ''}`;
 }
