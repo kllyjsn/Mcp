@@ -17,6 +17,14 @@ export const CHORD_INTERVALS: Record<ChordQuality, number[]> = {
   add9:              [0, 4, 7, 14],
   minor9:            [0, 3, 7, 10, 14],
   major9:            [0, 4, 7, 11, 14],
+  dominant9:         [0, 4, 7, 10, 14],
+  dominant13:        [0, 4, 7, 10, 14, 21],
+  minor11:           [0, 3, 7, 10, 14, 17],
+  major7sharp11:     [0, 4, 7, 11, 18],
+  altered:           [0, 4, 8, 10, 13],   // 7#5b9
+  minor_major7:      [0, 3, 7, 11],
+  sixth:             [0, 4, 7, 9],
+  minor6:            [0, 3, 7, 9],
 };
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
@@ -134,6 +142,39 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   { name: 'Gospel I-IV-I-V', degrees: [0, 3, 0, 4], style: 'gospel' },
   { name: 'Gospel I-iii-IV-V-I', degrees: [0, 2, 3, 4, 0], style: 'gospel' },
   { name: 'Gospel IV-V-iii-vi', degrees: [3, 4, 2, 5], style: 'gospel' },
+  // Extended classical — Baroque & late-romantic patterns
+  { name: 'Pachelbel Canon', degrees: [0, 4, 5, 2, 3, 0, 3, 4], style: 'classical' },
+  { name: 'Romanesca I-V-vi-III-IV-I-IV-V', degrees: [0, 4, 5, 2, 3, 0, 3, 4], style: 'romantic' },
+  { name: 'Chromatic Descent i-VII-VI-V', degrees: [0, 6, 5, 4], style: 'romantic' },
+  { name: 'Deceptive Cadence I-IV-V-vi', degrees: [0, 3, 4, 5], style: 'classical' },
+  // Jazz extended — Coltrane changes, backdoor, Lady Bird
+  { name: 'Coltrane I-V-II-VI-III-VII', degrees: [0, 4, 1, 5, 2, 6], style: 'jazz' },
+  { name: 'Backdoor ii-bVII-I', degrees: [1, 6, 0], style: 'jazz' },
+  { name: 'Lady Bird I-III-IV-#IV', degrees: [0, 2, 3, 3], style: 'jazz' },
+  { name: 'Rhythm Changes I-vi-ii-V', degrees: [0, 5, 1, 4], style: 'jazz' },
+  // Neo Soul extended — Erykah / D'Angelo / Hiatus Kaiyote
+  { name: 'Neo Soul ii-V-I-III', degrees: [1, 4, 0, 2], style: 'neo_soul' },
+  { name: 'Neo Soul IV-iii-vi-V', degrees: [3, 2, 5, 4], style: 'neo_soul' },
+  { name: 'Neo Soul I-bVII-IV-iv', degrees: [0, 6, 3, 3], style: 'neo_soul' },
+  // Cinematic extended
+  { name: 'Cinematic vi-IV-I-V', degrees: [5, 3, 0, 4], style: 'cinematic' },
+  { name: 'Cinematic I-bVI-bVII-I', degrees: [0, 5, 6, 0], style: 'cinematic' },
+  { name: 'Epic i-bVI-bIII-bVII', degrees: [0, 5, 2, 6], style: 'cinematic' },
+  // Ambient extended
+  { name: 'Ambient I-III-V', degrees: [0, 2, 4], style: 'ambient' },
+  { name: 'Ambient sus I-IV-I-V', degrees: [0, 3, 0, 4], style: 'ambient' },
+  // Electronic extended
+  { name: 'EDM I-V-vi-IV', degrees: [0, 4, 5, 3], style: 'electronic' },
+  { name: 'Trance vi-V-IV-III', degrees: [5, 4, 3, 2], style: 'electronic' },
+  // Minimalist extended
+  { name: 'Minimalist I-v', degrees: [0, 4], style: 'minimalist' },
+  { name: 'Minimalist I-IV-vi', degrees: [0, 3, 5], style: 'minimalist' },
+  // Lo-fi extended
+  { name: 'Lo-fi I-vi-IV-ii', degrees: [0, 5, 3, 1], style: 'lo_fi' },
+  { name: 'Lo-fi iii-vi-ii-V', degrees: [2, 5, 1, 4], style: 'lo_fi' },
+  // Gospel extended
+  { name: 'Gospel IV-iv-I', degrees: [3, 3, 0], style: 'gospel' },
+  { name: 'Gospel I-III-IV-iv-I', degrees: [0, 2, 3, 3, 0], style: 'gospel' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -158,13 +199,22 @@ function applyChordEnrichment(
     if (quality === 'major') return 'add9';
     if (quality === 'minor') return 'sus2';
   }
-  if (complexity >= 5) {
+  if (complexity >= 4) {
     if (quality === 'major') quality = 'major7';
     else if (quality === 'minor') quality = 'minor7';
   }
-  if (complexity >= 7 && tension > 0.5 && Math.random() > 0.5) {
-    if (quality === 'major7') quality = 'major9';
-    else if (quality === 'minor7') quality = 'minor9';
+  if (complexity >= 6 && tension > 0.4 && Math.random() > 0.5) {
+    if (quality === 'major7') quality = Math.random() > 0.7 ? 'major9' : 'major7';
+    else if (quality === 'minor7') quality = Math.random() > 0.6 ? 'minor9' : 'minor7';
+    else if (quality === 'dominant7') quality = 'dominant9';
+  }
+  if (complexity >= 8 && tension > 0.5 && Math.random() > 0.5) {
+    if (quality === 'major9') quality = Math.random() > 0.5 ? 'major7sharp11' : 'major9';
+    else if (quality === 'minor9') quality = Math.random() > 0.5 ? 'minor11' : 'minor9';
+    else if (quality === 'dominant9') quality = Math.random() > 0.4 ? 'dominant13' : 'dominant9';
+  }
+  if (complexity >= 9 && tension > 0.7 && Math.random() > 0.6) {
+    if (quality === 'dominant7' || quality === 'dominant9') quality = 'altered';
   }
   return quality;
 }
@@ -194,6 +244,7 @@ export function generateChordProgression(
     const degreeIndex = measure % template.degrees.length;
     const degree = template.degrees[degreeIndex];
     const diatonic = diatonicChords[degree % diatonicChords.length];
+
 
     const scaleIntervals = SCALE_INTERVALS[scale];
     const majorIntervals = SCALE_INTERVALS['major'];
@@ -305,6 +356,8 @@ export function chordToString(chord: Chord): string {
     dominant7: '7', major7: 'maj7', minor7: 'm7',
     diminished7: 'dim7', half_diminished7: 'ø7', augmented7: 'aug7',
     sus2: 'sus2', sus4: 'sus4', add9: 'add9', minor9: 'm9', major9: 'maj9',
+    dominant9: '9', dominant13: '13', minor11: 'm11', major7sharp11: 'maj7♯11',
+    altered: '7alt', minor_major7: 'mΔ7', sixth: '6', minor6: 'm6',
   };
   return `${chord.root}${qualityStr[chord.quality] ?? ''}`;
 }

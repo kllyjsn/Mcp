@@ -10,7 +10,9 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'dominant13' | 'minor11' | 'major7sharp11'
+  | 'altered' | 'minor_major7' | 'sixth' | 'minor6';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -18,6 +20,8 @@ export interface Note {
   duration: number;    // in beats
   startBeat: number;
   noteName?: string;
+  isGraceNote?: boolean;
+  ornament?: 'mordent' | 'trill' | 'turn' | 'appoggiatura';
 }
 
 export interface Chord {
@@ -77,10 +81,11 @@ export type InstrumentType =
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
   | 'vibraphone' | 'clavinet' | 'tape_keys'
-  | 'sub_bass' | 'warm_pad';
+  | 'muted_trumpet' | 'flute' | 'celesta' | 'warm_pad'
+  | 'sub_bass';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'auto_filter' | 'stereo_widener' | 'vibrato';
   wet: number;
   params: Record<string, number>;
 }
