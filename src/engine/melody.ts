@@ -314,7 +314,7 @@ function generateMotifMelody(
 
     // Breathing rest between phrases — more likely at cadences
     const atCadence = tension ? isCadenceRegion(tension, currentBeat) : false;
-    const restChance = atCadence ? 0.8 : 0.7;
+    const restChance = atCadence ? 0.45 : 0.3;
     if (Math.random() < restChance && currentBeat < totalBeats) {
       const restDur = Math.min(atCadence ? 1 : 0.5 + Math.random() * 0.5, totalBeats - currentBeat);
       currentBeat += restDur;

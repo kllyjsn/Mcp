@@ -294,8 +294,9 @@ export function recomposeTrack(
     case 'Bass': newNotes = generateBassLine(params, chordProgression, tension); break;
     case 'Harmony': newNotes = generatePadVoicings(params, chordProgression, tension); break;
     case 'Counter Melody': {
-      const rawMelody = generateMelody(params, chordProgression, [4, 6], tension, phrases);
-      newNotes = generateCounterMelody(params, chordProgression, rawMelody, tension);
+      const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
+      const melodyNotes = melodyTrack ? melodyTrack.notes : generateMelody(params, chordProgression, [4, 6], tension, phrases);
+      newNotes = generateCounterMelody(params, chordProgression, melodyNotes, tension);
       break;
     }
     case 'Arpeggio': newNotes = generateArpeggio(params, chordProgression, tension); break;
