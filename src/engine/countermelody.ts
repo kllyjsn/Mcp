@@ -101,7 +101,7 @@ function generateObliqueMotion(
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
     if (!activeChord) { currentBeat += 1; continue; }
 
-    const chordDur = Math.min(activeChord.duration, totalBeats - currentBeat);
+    const chordDur = Math.min(activeChord.startBeat + activeChord.duration - currentBeat, totalBeats - currentBeat);
     const pedalNote = activeChord.voicing[Math.floor(activeChord.voicing.length / 2)];
 
     const numNotes = Math.max(1, Math.floor(chordDur * (params.melodicDensity / 15)));
