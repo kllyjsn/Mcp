@@ -101,6 +101,44 @@ const STYLE_ARCS: Record<CompositionStyle, SectionTemplate[]> = {
     { kind: 'breakdown', weight: 1, tension: 0.25, trackPresence: tp(0.6, 0.7, 0, 0, 0, 0.2) },
     { kind: 'outro',     weight: 1, tension: 0.3,  trackPresence: tp(0.8, 0.8, 0.5, 0.3, 0, 0.5) },
   ],
+  listening_room: [
+    { kind: 'intro',     weight: 1, tension: 0.1,  trackPresence: tp(0, 0.4, 0.4, 0, 0, 0.3) },
+    { kind: 'verse',     weight: 2, tension: 0.35, trackPresence: tp(1, 0.6, 0.8, 0.3, 0, 0.5) },
+    { kind: 'build',     weight: 1, tension: 0.6,  trackPresence: tp(1, 0.8, 1, 0.5, 0.4, 0.7) },
+    { kind: 'climax',    weight: 2, tension: 0.75, trackPresence: tp(1, 1, 1, 0.7, 0.6, 0.8) },
+    { kind: 'breakdown', weight: 1, tension: 0.2,  trackPresence: tp(0.5, 0.4, 0.5, 0, 0, 0.2) },
+    { kind: 'outro',     weight: 1, tension: 0.1,  trackPresence: tp(0.6, 0.5, 0.4, 0, 0, 0.3) },
+  ],
+  modal_jazz: [
+    { kind: 'intro',     weight: 1, tension: 0.15, trackPresence: tp(0, 0.5, 0.5, 0, 0, 0.5) },
+    { kind: 'verse',     weight: 2, tension: 0.4,  trackPresence: tp(1, 0.6, 1, 0.3, 0, 0.7) },
+    { kind: 'climax',    weight: 2, tension: 0.7,  trackPresence: tp(1, 0.8, 1, 0.6, 0.6, 0.9) },
+    { kind: 'breakdown', weight: 1, tension: 0.25, trackPresence: tp(0.4, 0.5, 0.8, 0, 0.4, 0.4) },
+    { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.4, 0.7, 0, 0, 0.4) },
+  ],
+  chamber: [
+    { kind: 'intro',     weight: 1, tension: 0.1,  trackPresence: tp(0.5, 0.3, 0, 0, 0, 0) },
+    { kind: 'verse',     weight: 2, tension: 0.35, trackPresence: tp(1, 0.7, 0.4, 0.3, 0, 0.1) },
+    { kind: 'build',     weight: 2, tension: 0.6,  trackPresence: tp(1, 1, 0.7, 0.5, 0.5, 0.1) },
+    { kind: 'climax',    weight: 2, tension: 0.85, trackPresence: tp(1, 1, 0.9, 0.7, 0.8, 0.15) },
+    { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.6, 0.5, 0, 0, 0, 0) },
+  ],
+  trip_hop: [
+    { kind: 'intro',     weight: 1, tension: 0.1,  trackPresence: tp(0, 0.3, 0.5, 0, 0, 0.5) },
+    { kind: 'verse',     weight: 2, tension: 0.4,  trackPresence: tp(0.7, 0.6, 0.9, 0.4, 0, 0.8) },
+    { kind: 'build',     weight: 1, tension: 0.6,  trackPresence: tp(0.9, 0.8, 1, 0.6, 0.4, 1) },
+    { kind: 'climax',    weight: 2, tension: 0.8,  trackPresence: tp(1, 1, 1, 0.8, 0.6, 1) },
+    { kind: 'breakdown', weight: 1, tension: 0.2,  trackPresence: tp(0.3, 0.5, 0, 0.3, 0, 0) },
+    { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.4, 0.5, 0.2, 0, 0.4) },
+  ],
+  r_and_b: [
+    { kind: 'intro',     weight: 1, tension: 0.15, trackPresence: tp(0, 0.5, 0.5, 0, 0, 0.5) },
+    { kind: 'verse',     weight: 2, tension: 0.4,  trackPresence: tp(0.9, 0.7, 0.9, 0.3, 0, 0.8) },
+    { kind: 'build',     weight: 1, tension: 0.65, trackPresence: tp(1, 0.9, 1, 0.6, 0.5, 0.9) },
+    { kind: 'climax',    weight: 2, tension: 0.85, trackPresence: tp(1, 1, 1, 0.8, 0.8, 1) },
+    { kind: 'breakdown', weight: 1, tension: 0.25, trackPresence: tp(0.5, 0.5, 0.6, 0, 0, 0.3) },
+    { kind: 'outro',     weight: 1, tension: 0.2,  trackPresence: tp(0.6, 0.6, 0.5, 0, 0, 0.4) },
+  ],
 };
 
 export function generateSections(

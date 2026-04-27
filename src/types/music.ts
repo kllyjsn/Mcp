@@ -1,16 +1,19 @@
-export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
+export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B' | 'Db' | 'Eb' | 'Ab' | 'Bb';
 
 export type ScaleType =
   | 'major' | 'natural_minor' | 'harmonic_minor' | 'melodic_minor'
   | 'dorian' | 'phrygian' | 'lydian' | 'mixolydian'
   | 'locrian' | 'whole_tone' | 'diminished'
-  | 'pentatonic_major' | 'pentatonic_minor' | 'blues';
+  | 'pentatonic_major' | 'pentatonic_minor' | 'blues'
+  | 'bebop_dominant' | 'bebop_major' | 'hungarian_minor' | 'lydian_dominant';
 
 export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'major6' | 'minor6' | 'dominant9' | 'dominant13'
+  | 'minor11' | 'major7sharp11';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -18,6 +21,7 @@ export interface Note {
   duration: number;    // in beats
   startBeat: number;
   noteName?: string;
+  articulation?: 'legato' | 'staccato' | 'tenuto' | 'accent' | 'normal';
 }
 
 export interface Chord {
@@ -54,7 +58,9 @@ export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'lo_fi' | 'gospel';
+  | 'bossa_nova' | 'lo_fi' | 'gospel'
+  | 'listening_room' | 'modal_jazz' | 'chamber'
+  | 'trip_hop' | 'r_and_b';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -77,10 +83,13 @@ export type InstrumentType =
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
   | 'vibraphone' | 'clavinet' | 'tape_keys'
+  | 'wurlitzer' | 'muted_trumpet' | 'marimba'
+  | 'analog_pad' | 'celeste' | 'harpsichord'
+  | 'fretless_bass' | 'finger_bass'
   | 'sub_bass' | 'warm_pad';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'auto_wah' | 'ping_pong_delay';
   wet: number;
   params: Record<string, number>;
 }
@@ -102,6 +111,12 @@ export interface TransportState {
   loop: boolean;
   loopStart: number;
   loopEnd: number;
+}
+
+export interface CompositionPreset {
+  name: string;
+  description: string;
+  params: Partial<CompositionParams>;
 }
 
 // ---------------------------------------------------------------------------

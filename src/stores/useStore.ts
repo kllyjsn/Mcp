@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type {
   Composition,
   CompositionParams,
+  CompositionPreset,
   TransportState,
 } from '../types/music';
 import { compose, recomposeTrack } from '../engine/composer';
@@ -30,6 +31,7 @@ interface ComposerStore {
   activeView: 'arrange' | 'mixer' | 'piano_roll';
 
   setParam: <K extends keyof CompositionParams>(key: K, value: CompositionParams[K]) => void;
+  applyPreset: (preset: CompositionPreset) => void;
   generate: () => Promise<void>;
   regenerateTrack: (trackIndex: number) => void;
   togglePlay: () => Promise<void>;
@@ -76,6 +78,12 @@ export const useStore = create<ComposerStore>((set, get) => ({
   setParam: (key, value) => {
     set(state => ({
       params: { ...state.params, [key]: value },
+    }));
+  },
+
+  applyPreset: (preset: CompositionPreset) => {
+    set(state => ({
+      params: { ...state.params, ...preset.params },
     }));
   },
 

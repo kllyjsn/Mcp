@@ -1,4 +1,4 @@
-import type { Composition, CompositionParams, CompositionStyle, InstrumentType, Track, TrackEffect } from '../types/music';
+import type { Composition, CompositionParams, CompositionPreset, CompositionStyle, InstrumentType, Track, TrackEffect } from '../types/music';
 import { generateChordProgression } from './chords';
 import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern, addDrumFills } from './melody';
 import { humanizeTrack } from './humanize';
@@ -161,6 +161,56 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }, { type: 'reverb', wet: 0.1, params: { decay: 2 } }],
     melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.35, drumsVol: 0.55,
   },
+  listening_room: {
+    melody: 'wurlitzer', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'nylon_guitar', counter: 'vibraphone',
+    melodyFx: [{ type: 'tremolo', wet: 0.08, params: { frequency: 3.5, depth: 0.15 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    harmonyFx: [{ type: 'chorus', wet: 0.12, params: { frequency: 0.8, depth: 0.3 } }, { type: 'reverb', wet: 0.35, params: { decay: 4 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 1, high: -5 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'delay', wet: 0.15, params: { delayTime: 0.375, feedback: 0.25 } }],
+    counterFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'tremolo', wet: 0.1, params: { frequency: 4, depth: 0.2 } }],
+    drumsFx: [{ type: 'reverb', wet: 0.15, params: { decay: 2 } }, { type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2.5 } }],
+    melodyVol: 0.7, harmonyVol: 0.45, bassVol: 0.7, arpeggioVol: 0.25, counterVol: 0.3, drumsVol: 0.35,
+  },
+  modal_jazz: {
+    melody: 'muted_trumpet', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'electric_piano',
+    melodyFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }, { type: 'delay', wet: 0.1, params: { delayTime: 0.5, feedback: 0.2 } }],
+    harmonyFx: [{ type: 'tremolo', wet: 0.06, params: { frequency: 3, depth: 0.15 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 0, high: -4 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'tremolo', wet: 0.12, params: { frequency: 4.5, depth: 0.2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2.5 } }, { type: 'reverb', wet: 0.12, params: { decay: 1.8 } }],
+    melodyVol: 0.75, harmonyVol: 0.45, bassVol: 0.72, arpeggioVol: 0.28, counterVol: 0.32, drumsVol: 0.45,
+  },
+  chamber: {
+    melody: 'piano', harmony: 'strings', bass: 'bass', arpeggio: 'harpsichord', counter: 'strings',
+    melodyFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3.5 } }],
+    harmonyFx: [{ type: 'reverb', wet: 0.45, params: { decay: 5 } }, { type: 'chorus', wet: 0.1, params: { frequency: 0.6, depth: 0.3 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 3 } }, { type: 'reverb', wet: 0.1, params: { decay: 2 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    counterFx: [{ type: 'reverb', wet: 0.35, params: { decay: 4 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 2 } }],
+    melodyVol: 0.78, harmonyVol: 0.55, bassVol: 0.6, arpeggioVol: 0.3, counterVol: 0.4, drumsVol: 0.15,
+  },
+  trip_hop: {
+    melody: 'electric_piano', harmony: 'warm_pad', bass: 'sub_bass', arpeggio: 'bells', counter: 'tape_keys',
+    melodyFx: [{ type: 'reverb', wet: 0.35, params: { decay: 4 } }, { type: 'filter', wet: 0.8, params: { frequency: 2000 } }],
+    harmonyFx: [{ type: 'reverb', wet: 0.5, params: { decay: 6 } }, { type: 'phaser', wet: 0.15, params: { frequency: 0.2, octaves: 2, baseFrequency: 300 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -12, ratio: 6 } }, { type: 'distortion', wet: 0.08, params: { amount: 0.15 } }],
+    arpeggioFx: [{ type: 'delay', wet: 0.4, params: { delayTime: 0.375, feedback: 0.45 } }, { type: 'filter', wet: 1, params: { frequency: 1800 } }],
+    counterFx: [{ type: 'bitcrusher', wet: 0.08, params: { bits: 12 } }, { type: 'reverb', wet: 0.35, params: { decay: 4 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -10, ratio: 5 } }, { type: 'bitcrusher', wet: 0.06, params: { bits: 14 } }],
+    melodyVol: 0.68, harmonyVol: 0.4, bassVol: 0.8, arpeggioVol: 0.3, counterVol: 0.28, drumsVol: 0.6,
+  },
+  r_and_b: {
+    melody: 'electric_piano', harmony: 'electric_piano', bass: 'finger_bass', arpeggio: 'vibraphone', counter: 'nylon_guitar',
+    melodyFx: [{ type: 'chorus', wet: 0.15, params: { frequency: 1, depth: 0.4 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
+    harmonyFx: [{ type: 'tremolo', wet: 0.06, params: { frequency: 3.5, depth: 0.15 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 4 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 0, high: -3 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }, { type: 'delay', wet: 0.15, params: { delayTime: 0.25, feedback: 0.2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'chorus', wet: 0.08, params: { frequency: 0.8, depth: 0.3 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }],
+    melodyVol: 0.78, harmonyVol: 0.5, bassVol: 0.72, arpeggioVol: 0.28, counterVol: 0.3, drumsVol: 0.52,
+  },
 };
 
 export function compose(params: CompositionParams): Composition {
@@ -313,3 +363,56 @@ export function recomposeTrack(
 
   return { ...track, notes: newNotes };
 }
+
+export const COMPOSITION_PRESETS: CompositionPreset[] = [
+  {
+    name: 'Late Night in Soho',
+    description: 'Intimate listening room — Wurlitzer trio with brushes',
+    params: { style: 'listening_room', key: 'Eb', scale: 'dorian', tempo: 88, measures: 16, harmonicComplexity: 7, melodicDensity: 5, rhythmicVariety: 6, expressiveness: 8, dynamics: 'swell' },
+  },
+  {
+    name: 'Blue Note Set',
+    description: 'Classic jazz club — walking bass, ride cymbal, extended harmony',
+    params: { style: 'jazz', key: 'F', scale: 'mixolydian', tempo: 132, measures: 12, harmonicComplexity: 8, melodicDensity: 7, rhythmicVariety: 7, expressiveness: 7, dynamics: 'terraced' },
+  },
+  {
+    name: "Ravel's Garden",
+    description: 'Impressionist — whole-tone colours, pianistic filigree',
+    params: { style: 'impressionist', key: 'Db', scale: 'whole_tone', tempo: 72, measures: 16, harmonicComplexity: 8, melodicDensity: 4, rhythmicVariety: 3, expressiveness: 7, dynamics: 'swell' },
+  },
+  {
+    name: 'Sunday Gospel',
+    description: 'Gospel — rich organ, bright piano, spirited rhythm',
+    params: { style: 'gospel', key: 'G', scale: 'major', tempo: 100, measures: 16, harmonicComplexity: 6, melodicDensity: 6, rhythmicVariety: 7, expressiveness: 8, dynamics: 'dramatic' },
+  },
+  {
+    name: 'Kind of Blue',
+    description: 'Modal jazz — quartal harmony, muted trumpet, suspended feel',
+    params: { style: 'modal_jazz', key: 'D', scale: 'dorian', tempo: 108, measures: 16, harmonicComplexity: 6, melodicDensity: 4, rhythmicVariety: 5, expressiveness: 8, dynamics: 'swell' },
+  },
+  {
+    name: 'Chamber Recital',
+    description: 'Intimate classical — piano, strings, no drums',
+    params: { style: 'chamber', key: 'A', scale: 'major', tempo: 84, measures: 16, harmonicComplexity: 6, melodicDensity: 5, rhythmicVariety: 3, expressiveness: 7, dynamics: 'crescendo' },
+  },
+  {
+    name: 'Bristol Midnight',
+    description: 'Trip-hop — dark bass, broken beats, filtered pads',
+    params: { style: 'trip_hop', key: 'D', scale: 'phrygian', tempo: 82, measures: 16, harmonicComplexity: 5, melodicDensity: 3, rhythmicVariety: 6, expressiveness: 5, dynamics: 'terraced' },
+  },
+  {
+    name: 'Lo-Fi Study',
+    description: 'Lo-fi — warm tape sound, gentle beats, chill chords',
+    params: { style: 'lo_fi', key: 'E', scale: 'pentatonic_minor', tempo: 75, measures: 16, harmonicComplexity: 4, melodicDensity: 4, rhythmicVariety: 4, expressiveness: 5, dynamics: 'flat' },
+  },
+  {
+    name: 'Motown Smooth',
+    description: 'R&B — finger bass, electric piano, 16th-note hats',
+    params: { style: 'r_and_b', key: 'Ab', scale: 'dorian', tempo: 96, measures: 16, harmonicComplexity: 6, melodicDensity: 5, rhythmicVariety: 6, expressiveness: 7, dynamics: 'swell' },
+  },
+  {
+    name: 'Minimalist Pulse',
+    description: 'Minimalist — hypnotic repetition, subtle shifts',
+    params: { style: 'minimalist', key: 'C', scale: 'major', tempo: 120, measures: 32, harmonicComplexity: 2, melodicDensity: 3, rhythmicVariety: 2, expressiveness: 3, dynamics: 'flat' },
+  },
+];
