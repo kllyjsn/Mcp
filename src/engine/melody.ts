@@ -174,7 +174,7 @@ function addOrnaments(notes: Note[], params: CompositionParams): Note[] {
         result.push({
           ...note,
           startBeat: note.startBeat + 0.06,
-          duration: note.duration - 0.06,
+          duration: Math.max(0.05, note.duration - 0.06),
         });
         continue;
       } else if (ornType < 0.8) {
@@ -185,7 +185,7 @@ function addOrnaments(notes: Note[], params: CompositionParams): Note[] {
         result.push({ pitch: upper, velocity: Math.round(note.velocity * 0.7), duration: turnDur, startBeat: note.startBeat, isGraceNote: true, ornament: 'turn' });
         result.push({ pitch: note.pitch, velocity: Math.round(note.velocity * 0.75), duration: turnDur, startBeat: note.startBeat + turnDur, isGraceNote: true });
         result.push({ pitch: lower, velocity: Math.round(note.velocity * 0.7), duration: turnDur, startBeat: note.startBeat + turnDur * 2, isGraceNote: true });
-        result.push({ ...note, startBeat: note.startBeat + turnDur * 3, duration: note.duration - turnDur * 3 });
+        result.push({ ...note, startBeat: note.startBeat + turnDur * 3, duration: Math.max(0.05, note.duration - turnDur * 3) });
         continue;
       }
     }

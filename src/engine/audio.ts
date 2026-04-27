@@ -473,7 +473,7 @@ function scheduleTrackNotes(
     if (graceOffset > 0) {
       transport.schedule((t) => {
         try {
-          instrument.triggerAttackRelease(noteName, duration, t, velocity * 0.7);
+          instrument.triggerAttackRelease(noteName, duration, t, velocity);
         } catch { /* note out of range */ }
       }, time);
     } else {
