@@ -284,8 +284,9 @@ export function recomposeTrack(
     case 'Arpeggio': newNotes = generateArpeggio(params, chordProgression); break;
     case 'Drums': newNotes = generateDrumPattern(params); break;
     case 'Countermelody': {
-      const rawMelody = generateMelody(params, chordProgression, [4, 6]);
-      newNotes = generateCountermelody(params, chordProgression, rawMelody);
+      const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
+      const melodyNotes = melodyTrack ? melodyTrack.notes : [];
+      newNotes = generateCountermelody(params, chordProgression, melodyNotes);
       break;
     }
     default: newNotes = generateMelody(params, chordProgression);

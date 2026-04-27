@@ -649,8 +649,12 @@ export function generateCountermelody(
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
 
+  const TIMING_TOLERANCE = 0.08;
   const mainPitchAtBeat = (beat: number): number | null => {
-    const note = mainMelody.find(n => n.startBeat <= beat && n.startBeat + n.duration > beat);
+    const note = mainMelody.find(n =>
+      n.startBeat - TIMING_TOLERANCE <= beat &&
+      n.startBeat + n.duration + TIMING_TOLERANCE > beat
+    );
     return note ? note.pitch : null;
   };
 
