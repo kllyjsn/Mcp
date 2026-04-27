@@ -202,18 +202,21 @@ export function generateChordProgression(
     let quality = applyChordEnrichment(diatonic.quality, complexity, tension);
     let roman = diatonic.roman;
 
-    // --- Advanced substitutions based on complexity & tension ---
+    // --- Advanced substitutions (mutually exclusive) ---
 
-    // Tritone substitution on dominant chords
     if (complexity >= 7 && tension > 0.6 && diatonic.quality === 'dominant7' && Math.random() > 0.6) {
+      // Tritone substitution on dominant chords
       const sub = tritoneSub(rootIndex, quality);
       rootIndex = sub.rootIndex;
       quality = sub.quality;
       roman = 'bII7';
-    }
-
-    // Secondary dominant approach
-    if (complexity >= 6 && tension > 0.4 && Math.random() > 0.7) {
+    } else if (complexity >= 8 && tension > 0.5 && (style === 'impressionist' || style === 'cinematic' || style === 'neo_soul') && Math.random() > 0.75) {
+      // Chromatic mediant
+      rootIndex = chromaticMediant(rootIndex);
+      quality = Math.random() > 0.5 ? 'major7' : 'major';
+      roman = 'bVI';
+    } else if (complexity >= 6 && tension > 0.4 && Math.random() > 0.7) {
+      // Secondary dominant approach
       const nextDegreeIndex = (measure + 1) % template.degrees.length;
       const nextDegree = template.degrees[nextDegreeIndex];
       const secDomInterval = (scaleIntervals && nextDegree < scaleIntervals.length)
@@ -224,23 +227,17 @@ export function generateChordProgression(
         quality = 'dominant7';
         roman = `V/${ROMAN_NUMERALS[nextDegree] ?? '?'}`;
       }
-    }
-
-    // Chromatic mediant (impressionist / cinematic flavor)
-    if (complexity >= 8 && tension > 0.5 && (style === 'impressionist' || style === 'cinematic' || style === 'neo_soul') && Math.random() > 0.75) {
-      rootIndex = chromaticMediant(rootIndex);
-      quality = Math.random() > 0.5 ? 'major7' : 'major';
-      roman = 'bVI';
-    }
-
-    // Borrowed chord from parallel minor/major
-    if (complexity >= 6 && Math.random() > 0.8) {
+    } else if (complexity >= 6 && Math.random() > 0.8) {
+      // Borrowed chord from parallel minor/major
       const parallelScale = scale === 'major' ? 'natural_minor' : 'major';
+      const parallelDiatonic = getDiatonicChords(parallelScale);
       const parallelIntervals = SCALE_INTERVALS[parallelScale];
       if (parallelIntervals && degree < parallelIntervals.length) {
         const borrowedInterval = parallelIntervals[degree];
         rootIndex = (NOTE_NAMES.indexOf(key) + borrowedInterval) % 12;
-        roman = `(${roman})`;
+        const borrowedChord = parallelDiatonic[degree % parallelDiatonic.length];
+        quality = applyChordEnrichment(borrowedChord.quality, complexity, tension);
+        roman = `(${borrowedChord.roman})`;
       }
     }
 
