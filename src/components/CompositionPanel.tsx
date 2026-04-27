@@ -1,7 +1,8 @@
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church } from 'lucide-react';
+import { Music, Waves, Zap, Heart, Sparkles, Disc3, Coffee, Church } from 'lucide-react';
+import { PresetsPanel } from './PresetsPanel';
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -16,8 +17,6 @@ const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'pentatonic_minor', label: 'Pentatonic Minor' },
   { value: 'blues', label: 'Blues' },
   { value: 'whole_tone', label: 'Whole Tone' },
-  { value: 'locrian', label: 'Locrian' },
-  { value: 'diminished', label: 'Diminished' },
 ];
 
 const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] = [
@@ -26,13 +25,13 @@ const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] =
   { value: 'impressionist', label: 'Impressionist', icon: Waves },
   { value: 'jazz', label: 'Jazz', icon: Sparkles },
   { value: 'neo_soul', label: 'Neo Soul', icon: Sparkles },
-  { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
-  { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
-  { value: 'gospel', label: 'Gospel', icon: Church },
   { value: 'ambient', label: 'Ambient', icon: Waves },
   { value: 'minimalist', label: 'Minimalist', icon: Zap },
   { value: 'cinematic', label: 'Cinematic', icon: Music },
   { value: 'electronic', label: 'Electronic', icon: Zap },
+  { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
+  { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
+  { value: 'gospel', label: 'Gospel', icon: Church },
 ];
 
 const DYNAMICS: { value: DynamicCurve; label: string }[] = [
@@ -191,6 +190,10 @@ export function CompositionPanel() {
             onChange={v => setParam('expressiveness', v)}
           />
         </div>
+
+        <div className="h-px bg-zinc-800/50" />
+
+        <PresetsPanel />
       </div>
     </div>
   );

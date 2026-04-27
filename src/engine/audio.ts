@@ -465,3 +465,24 @@ export function getWaveformNode(): Tone.Analyser {
   }
   return waveformNode;
 }
+
+// WAV Export via Tone.js Recorder
+let recorder: Tone.Recorder | null = null;
+
+export async function startRecording(): Promise<void> {
+  if (recorder) {
+    try { recorder.dispose(); } catch { /* ignore */ }
+  }
+  recorder = new Tone.Recorder();
+  Tone.getDestination().connect(recorder);
+  recorder.start();
+}
+
+export async function stopRecording(): Promise<Blob | null> {
+  if (!recorder) return null;
+  const blob = await recorder.stop();
+  Tone.getDestination().disconnect(recorder);
+  recorder.dispose();
+  recorder = null;
+  return blob;
+}
