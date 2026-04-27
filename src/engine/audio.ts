@@ -29,12 +29,12 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   electric_piano: {
     create: () => new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3.01,
-      modulationIndex: 1.5,
+      harmonicity: 3.5,
+      modulationIndex: 2.2,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.005, decay: 0.6, sustain: 0.2, release: 1.8 },
+      envelope: { attack: 0.003, decay: 0.8, sustain: 0.15, release: 2.2 },
       modulation: { type: 'square' },
-      modulationEnvelope: { attack: 0.002, decay: 0.3, sustain: 0, release: 0.5 },
+      modulationEnvelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.6 },
       volume: -8,
     }),
   },
@@ -51,19 +51,19 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   strings: {
     create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatsawtooth', spread: 20, count: 3 },
-      envelope: { attack: 0.5, decay: 0.4, sustain: 0.8, release: 2.5 },
+      oscillator: { type: 'fatsawtooth', spread: 25, count: 4 },
+      envelope: { attack: 0.6, decay: 0.5, sustain: 0.8, release: 3 },
       volume: -12,
     }),
   },
   vibraphone: {
     create: () => new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 8,
-      modulationIndex: 0.4,
+      modulationIndex: 0.5,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 1.2, sustain: 0, release: 2 },
+      envelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 2.5 },
       modulation: { type: 'sine' },
-      modulationEnvelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 1.5 },
+      modulationEnvelope: { attack: 0.001, decay: 1.0, sustain: 0, release: 2 },
       volume: -14,
     }),
   },
@@ -76,9 +76,16 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   bass: {
     create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatsawtooth', spread: 10, count: 2 },
-      envelope: { attack: 0.01, decay: 0.25, sustain: 0.5, release: 0.4 },
-      volume: -8,
+      oscillator: { type: 'fatsawtooth', spread: 8, count: 2 },
+      envelope: { attack: 0.008, decay: 0.3, sustain: 0.45, release: 0.35 },
+      volume: -6,
+    }),
+  },
+  sub_bass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.01, decay: 0.4, sustain: 0.6, release: 0.3 },
+      volume: -4,
     }),
   },
   upright_bass: {
@@ -101,9 +108,16 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   pads: {
     create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine4' },
-      envelope: { attack: 0.6, decay: 0.5, sustain: 0.7, release: 3 },
+      oscillator: { type: 'fatsine4', spread: 15, count: 3 },
+      envelope: { attack: 0.8, decay: 0.6, sustain: 0.7, release: 4 },
       volume: -12,
+    }),
+  },
+  warm_pad: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fattriangle', spread: 25, count: 3 },
+      envelope: { attack: 1.2, decay: 0.8, sustain: 0.75, release: 5 },
+      volume: -14,
     }),
   },
   organ: {
