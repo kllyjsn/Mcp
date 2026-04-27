@@ -87,9 +87,27 @@ export function generateForm(params: CompositionParams): FormSection[] {
   if (totalAssigned < params.measures) {
     sections[sections.length - 1].length += params.measures - totalAssigned;
   } else if (totalAssigned > params.measures) {
-    const excess = totalAssigned - params.measures;
-    const lastIdx = sections.length - 1;
-    sections[lastIdx].length = Math.max(1, sections[lastIdx].length - excess);
+    let excess = totalAssigned - params.measures;
+    for (let i = sections.length - 1; i >= 0 && excess > 0; i--) {
+      const canRemove = sections[i].length - 1;
+      if (canRemove > 0) {
+        const remove = Math.min(canRemove, excess);
+        sections[i].length -= remove;
+        excess -= remove;
+      }
+    }
+    if (excess > 0) {
+      while (sections.length > 1 && excess > 0) {
+        const removed = sections.pop()!;
+        excess -= removed.length;
+      }
+    }
+  }
+
+  let beat = 0;
+  for (const sec of sections) {
+    sec.startMeasure = beat;
+    beat += sec.length;
   }
 
   return sections;

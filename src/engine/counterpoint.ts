@@ -42,7 +42,7 @@ export function applyCounterpointRules(
 
   for (let i = 1; i < corrected.length; i++) {
     const prevMel = corrected[i - 1].pitch;
-    const currMel = corrected[i].pitch;
+    let currMel = corrected[i].pitch;
 
     const prevBass = findBassAtBeat(bassNotes, corrected[i - 1].startBeat);
     const currBass = findBassAtBeat(bassNotes, corrected[i].startBeat);
@@ -54,6 +54,7 @@ export function applyCounterpointRules(
       adjusted = nearestScaleNote(adjusted, params.key, params.scale);
       if (!isParallelFifthOrOctave(prevMel, adjusted, prevBass, currBass)) {
         corrected[i] = { ...corrected[i], pitch: adjusted };
+        currMel = adjusted;
       }
     }
 
@@ -63,6 +64,7 @@ export function applyCounterpointRules(
       let stepwise = prevMel + direction * 2;
       stepwise = nearestScaleNote(stepwise, params.key, params.scale);
       corrected[i] = { ...corrected[i], pitch: stepwise };
+      currMel = stepwise;
     }
 
     const motion = classifyMotion(currMel - prevMel, currBass - prevBass);

@@ -299,7 +299,7 @@ export function generateBassLine(
   params: CompositionParams,
   chords: Chord[],
 ): Note[] {
-  if (params.style === 'jazz' || params.style === 'bossa_nova') {
+  if (params.style === 'jazz' || params.style === 'bossa_nova' || params.style === 'post_bop' || params.style === 'film_noir') {
     return generateWalkingBass(params, chords);
   }
   if (params.style === 'neo_soul' || params.style === 'lo_fi' || params.style === 'gospel') {
@@ -552,7 +552,7 @@ export function generateArpeggio(
 export function generateDrumPattern(
   params: CompositionParams,
 ): Note[] {
-  if (params.style === 'jazz' || params.style === 'neo_soul') {
+  if (params.style === 'jazz' || params.style === 'neo_soul' || params.style === 'post_bop' || params.style === 'film_noir') {
     return generateJazzDrums(params);
   }
   if (params.style === 'bossa_nova') {
