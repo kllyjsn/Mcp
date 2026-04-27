@@ -236,12 +236,16 @@ function tensionAwareQuality(
   tension: TensionCurve | undefined,
   beat: number,
 ): ChordQuality {
-  const t = tension ? tensionAtBeat(tension, beat) : 0.5;
-
+  // Basic complexity upgrades (always applied)
   if (complexity >= 5) {
     if (baseQuality === 'major') baseQuality = 'major7';
     else if (baseQuality === 'minor') baseQuality = 'minor7';
   }
+
+  // Skip tension-dependent extensions when no tension curve is available
+  if (!tension) return baseQuality;
+
+  const t = tensionAtBeat(tension, beat);
 
   // High tension + high complexity → richer extensions
   if (complexity >= 7 && t > 0.6) {
@@ -254,7 +258,7 @@ function tensionAwareQuality(
   }
 
   // Low tension → simpler chord for resolution clarity
-  if (t < 0.2 && complexity < 8) {
+  if (t < 0.2) {
     if (baseQuality === 'major9')    baseQuality = 'major7';
     else if (baseQuality === 'minor9')    baseQuality = 'minor7';
     else if (baseQuality === 'dominant9') baseQuality = 'dominant7';
