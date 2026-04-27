@@ -22,6 +22,10 @@ const STYLE_HUMANIZE: Record<CompositionStyle, HumanizeOptions> = {
   bossa_nova:    { timingJitter: 0.025, velocitySpread: 14, swingAmount: 0.18, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.1 },
   lo_fi:         { timingJitter: 0.04,  velocitySpread: 20, swingAmount: 0.28, driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0.18 },
   gospel:        { timingJitter: 0.02,  velocitySpread: 16, swingAmount: 0.15, driftRate: 0.004, accentDownbeats: true,  ghostNoteChance: 0.08 },
+  late_romantic: { timingJitter: 0.03,  velocitySpread: 18, swingAmount: 0,    driftRate: 0.01,  accentDownbeats: true,  ghostNoteChance: 0 },
+  post_bop:      { timingJitter: 0.035, velocitySpread: 20, swingAmount: 0.35, driftRate: 0.005, accentDownbeats: false, ghostNoteChance: 0.2 },
+  chamber:       { timingJitter: 0.015, velocitySpread: 10, swingAmount: 0,    driftRate: 0.004, accentDownbeats: true,  ghostNoteChance: 0 },
+  film_noir:     { timingJitter: 0.03,  velocitySpread: 16, swingAmount: 0.2,  driftRate: 0.006, accentDownbeats: false, ghostNoteChance: 0.12 },
 };
 
 function gaussianRandom(): number {

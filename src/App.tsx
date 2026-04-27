@@ -5,6 +5,7 @@ import { ArrangementView } from './components/ArrangementView';
 import { MixerView } from './components/MixerView';
 import { PianoRollView } from './components/PianoRollView';
 import { ChordDisplay } from './components/ChordDisplay';
+import { FormView } from './components/FormView';
 import { LayoutGrid, Sliders, Piano } from 'lucide-react';
 
 function ViewTab({ active, onClick, icon: Icon, label }: {
@@ -78,6 +79,7 @@ export default function App() {
       <div className="flex-1 flex overflow-hidden">
         <CompositionPanel />
         <div className="flex-1 flex flex-col overflow-hidden">
+          {composition && <FormView />}
           {activeView === 'arrange' && <ArrangementView />}
           {activeView === 'mixer' && <MixerView />}
           {activeView === 'piano_roll' && <PianoRollView />}
