@@ -55,6 +55,10 @@ export function ExportButton() {
       }, durationMs);
     } catch {
       await stopRecording().catch(() => {});
+      if (useStore.getState().transport.loop) {
+        const tb = composition.params.measures * composition.params.timeSignature[0];
+        setLoop(0, tb);
+      }
       setExporting(false);
     }
   };
