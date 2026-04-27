@@ -1,5 +1,5 @@
 import type { Composition, CompositionParams, CompositionStyle, InstrumentType, Track, TrackEffect } from '../types/music';
-import { generateChordProgression } from './chords';
+import { generateChordProgression, applyTensionToChords } from './chords';
 import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern, generateCounterMelody } from './melody';
 import { humanizeTrack } from './humanize';
 import { generateTensionCurve, getPhraseStructures } from './tension';
@@ -165,17 +165,13 @@ export function compose(params: CompositionParams): Composition {
   const beatsPerBar = params.timeSignature[0];
   const totalBeats = params.measures * beatsPerBar;
 
-  // Generate tension curve first — it drives everything else
-  const preliminaryChords = generateChordProgression(
+  // Generate chords once, compute tension from them, then upgrade qualities in-place
+  const chords = generateChordProgression(
     params.key, params.scale, params.measures, params.style, params.harmonicComplexity,
   );
-  const tension = generateTensionCurve(totalBeats, beatsPerBar, params.style, preliminaryChords);
+  const tension = generateTensionCurve(totalBeats, beatsPerBar, params.style, chords);
+  applyTensionToChords(chords, params.harmonicComplexity, tension);
   const phrases = getPhraseStructures(totalBeats, beatsPerBar, params.style, tension);
-
-  // Re-generate chords with tension awareness
-  const chords = generateChordProgression(
-    params.key, params.scale, params.measures, params.style, params.harmonicComplexity, tension,
-  );
 
   const sv = STYLE_VOICINGS[params.style];
 

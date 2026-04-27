@@ -355,6 +355,16 @@ export function generateChordProgression(
   return chords;
 }
 
+/**
+ * Apply tension-aware quality upgrades to an existing chord progression in-place.
+ * This avoids regenerating chords (and getting a different random template).
+ */
+export function applyTensionToChords(chords: Chord[], complexity: number, tension: TensionCurve): void {
+  for (const chord of chords) {
+    chord.quality = tensionAwareQuality(chord.quality, complexity, tension, chord.startBeat);
+  }
+}
+
 export function chordToString(chord: Chord): string {
   const qualityStr: Record<string, string> = {
     major: '', minor: 'm', diminished: 'dim', augmented: 'aug',
