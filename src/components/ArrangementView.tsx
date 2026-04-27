@@ -48,8 +48,42 @@ export function ArrangementView() {
 
   return (
     <div className="flex-1 overflow-auto custom-scrollbar bg-zinc-950/30">
+      {/* Section markers */}
+      {composition.sections.length > 0 && (
+        <div className="sticky top-0 z-20 flex bg-zinc-900/95 border-b border-zinc-800/40 backdrop-blur-sm">
+          <div className="w-44 shrink-0 px-3 py-1 border-r border-zinc-800/50">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Sections</span>
+          </div>
+          <div className="flex-1 relative" style={{ minWidth: viewWidth }}>
+            <div className="flex h-full">
+              {composition.sections.map((section, i) => {
+                const left = (section.startMeasure / composition.params.measures) * 100;
+                const width = (section.lengthMeasures / composition.params.measures) * 100;
+                const tensionPct = Math.round(section.tension * 100);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-center border-r border-zinc-700/40 text-[10px] py-1"
+                    style={{
+                      position: 'absolute',
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      height: '100%',
+                      background: `linear-gradient(90deg, rgba(217,119,6,${section.tension * 0.12}) 0%, rgba(217,119,6,${section.tension * 0.06}) 100%)`,
+                    }}
+                  >
+                    <span className="text-amber-300/80 font-semibold capitalize">{section.kind}</span>
+                    <span className="text-zinc-500 ml-1.5 text-[9px]">{tensionPct}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chord progression header */}
-      <div className="sticky top-0 z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm">
+      <div className="sticky top-[29px] z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm">
         <div className="w-44 shrink-0 px-3 py-2 border-r border-zinc-800/50">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Chords</span>
         </div>
