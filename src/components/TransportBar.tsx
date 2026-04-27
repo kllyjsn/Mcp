@@ -12,6 +12,7 @@ export function TransportBar() {
     stopPlayback,
     generate,
     isGenerating,
+    isExporting,
     toggleLoop,
     setTempo,
   } = useStore();
@@ -21,14 +22,16 @@ export function TransportBar() {
       <div className="flex items-center gap-1.5">
         <button
           onClick={stopPlayback}
-          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+          disabled={isExporting}
+          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-30 disabled:pointer-events-none"
           title="Stop"
         >
           <Square size={16} fill="currentColor" />
         </button>
         <button
           onClick={stopPlayback}
-          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+          disabled={isExporting}
+          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-30 disabled:pointer-events-none"
           title="Rewind"
         >
           <SkipBack size={16} />
@@ -36,7 +39,7 @@ export function TransportBar() {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={togglePlay}
-          disabled={!composition}
+          disabled={!composition || isExporting}
           className={`p-3 rounded-xl transition-all ${
             transport.isPlaying
               ? 'bg-amber-600/20 text-amber-400 hover:bg-amber-600/30'
@@ -48,7 +51,8 @@ export function TransportBar() {
         </motion.button>
         <button
           onClick={toggleLoop}
-          className={`p-2 rounded-lg transition-colors ${
+          disabled={isExporting}
+          className={`p-2 rounded-lg transition-colors disabled:opacity-30 disabled:pointer-events-none ${
             transport.loop
               ? 'bg-amber-600/20 text-amber-400'
               : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
@@ -94,7 +98,7 @@ export function TransportBar() {
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={() => generate()}
-        disabled={isGenerating}
+        disabled={isGenerating || isExporting}
         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-zinc-900 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
       >
         <RotateCcw size={14} className={isGenerating ? 'animate-spin' : ''} />
