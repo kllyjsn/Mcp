@@ -18,8 +18,11 @@ export function buildRootlessVoicingA(root: NoteName, quality: ChordQuality, oct
   const rootMidi = noteNameToMidi(root, octave);
   const q = quality;
 
-  if (q === 'dominant7' || q === 'major7') {
+  if (q === 'dominant7') {
     return [rootMidi + 4, rootMidi + 7, rootMidi + 10, rootMidi + 14];
+  }
+  if (q === 'major7') {
+    return [rootMidi + 4, rootMidi + 7, rootMidi + 11, rootMidi + 14];
   }
   if (q === 'minor7') {
     return [rootMidi + 3, rootMidi + 7, rootMidi + 10, rootMidi + 14];
@@ -37,8 +40,11 @@ export function buildRootlessVoicingB(root: NoteName, quality: ChordQuality, oct
   const rootMidi = noteNameToMidi(root, octave);
   const q = quality;
 
-  if (q === 'dominant7' || q === 'major7') {
+  if (q === 'dominant7') {
     return [rootMidi + 10, rootMidi + 14, rootMidi + 16, rootMidi + 19];
+  }
+  if (q === 'major7') {
+    return [rootMidi + 11, rootMidi + 14, rootMidi + 16, rootMidi + 19];
   }
   if (q === 'minor7') {
     return [rootMidi + 10, rootMidi + 14, rootMidi + 15, rootMidi + 19];

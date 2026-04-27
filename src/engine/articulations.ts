@@ -135,7 +135,7 @@ export function applyArticulations(
       continue;
     }
 
-    accumulated += profile.staccatoChance;
+    accumulated += profile.staccatoChance * expMod;
     if (r < accumulated) {
       result.push({ ...note, duration: note.duration * 0.4 });
       continue;

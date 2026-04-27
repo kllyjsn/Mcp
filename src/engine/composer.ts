@@ -279,5 +279,9 @@ export function recomposeTrack(
 
   newNotes = humanizeTrack(newNotes, params.style, track.name, beatsPerBar);
 
+  const sections = composition.sections ?? buildForm(params.measures, params.style);
+  newNotes = applySectionEnergy(newNotes, sections, beatsPerBar);
+  newNotes = muteInactiveSections(newNotes, track.name.toLowerCase(), sections, beatsPerBar);
+
   return { ...track, notes: newNotes };
 }
