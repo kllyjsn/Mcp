@@ -6,8 +6,9 @@ import { downloadMidi } from '../engine/midi';
 
 export function TransportBar() {
   const {
-    transport, composition, isGenerating,
-    togglePlay, stopPlayback, generate, setParam,
+    transport, composition, isGenerating, params,
+    togglePlay, stopPlayback, generate, toggleLoop,
+    setTempo: setTempoAction,
   } = useStore();
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export function TransportBar() {
         </button>
 
         <button
+          onClick={toggleLoop}
           className={`p-2 rounded-lg transition-all ${
             transport.loop
               ? 'text-amber-400 bg-amber-600/15'
@@ -90,8 +92,8 @@ export function TransportBar() {
           type="number"
           min={40}
           max={240}
-          value={useStore.getState().params.tempo}
-          onChange={e => setParam('tempo', Math.max(40, Math.min(240, +e.target.value)))}
+          value={params.tempo}
+          onChange={e => setTempoAction(Math.max(40, Math.min(240, +e.target.value)))}
           className="w-14 bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-2 py-1 text-sm text-amber-400 font-mono text-center focus:outline-none focus:border-amber-600/50"
         />
       </div>
