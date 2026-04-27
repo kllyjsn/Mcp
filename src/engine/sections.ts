@@ -115,6 +115,8 @@ export function generateSections(
   let measuresLeft = measures;
 
   for (let i = 0; i < templates.length; i++) {
+    if (measuresLeft <= 0) break;
+
     const t = templates[i];
     const isLast = i === templates.length - 1;
     const idealLength = Math.round((t.weight / totalWeight) * measures);
@@ -122,18 +124,19 @@ export function generateSections(
       ? measuresLeft
       : Math.max(1, Math.min(idealLength, measuresLeft - (templates.length - i - 1)));
 
-    if (length <= 0) continue;
+    const clampedLength = Math.min(Math.max(length, 0), measuresLeft);
+    if (clampedLength <= 0) continue;
 
     sections.push({
       kind: t.kind,
       startMeasure: currentMeasure,
-      lengthMeasures: length,
+      lengthMeasures: clampedLength,
       trackPresence: { ...t.trackPresence },
       tension: t.tension,
     });
 
-    currentMeasure += length;
-    measuresLeft -= length;
+    currentMeasure += clampedLength;
+    measuresLeft -= clampedLength;
   }
 
   return sections;
