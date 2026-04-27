@@ -1,19 +1,21 @@
 import type { Note, CompositionStyle } from '../types/music';
 
 interface HumanizeOptions {
-  timingJitter: number;     // max beat offset (e.g. 0.02 = subtle, 0.06 = loose)
-  velocitySpread: number;   // random velocity variation range
-  swingAmount: number;      // 0 = straight, 0.5 = hard swing (offbeat delay)
-  driftRate: number;        // slow tempo micro-drift per phrase
-  accentDownbeats: boolean; // slightly louder on beats 1 & 3
-  ghostNoteChance: number;  // probability of converting weak-beat notes to ghost velocity
+  timingJitter: number;
+  velocitySpread: number;
+  swingAmount: number;
+  driftRate: number;
+  accentDownbeats: boolean;
+  ghostNoteChance: number;
 }
 
 const STYLE_HUMANIZE: Record<CompositionStyle, HumanizeOptions> = {
   classical:     { timingJitter: 0.012, velocitySpread: 8,  swingAmount: 0,    driftRate: 0.003, accentDownbeats: true,  ghostNoteChance: 0 },
   romantic:      { timingJitter: 0.02,  velocitySpread: 14, swingAmount: 0,    driftRate: 0.006, accentDownbeats: true,  ghostNoteChance: 0 },
+  post_romantic: { timingJitter: 0.022, velocitySpread: 15, swingAmount: 0,    driftRate: 0.007, accentDownbeats: true,  ghostNoteChance: 0 },
   impressionist: { timingJitter: 0.025, velocitySpread: 12, swingAmount: 0,    driftRate: 0.008, accentDownbeats: false, ghostNoteChance: 0 },
   jazz:          { timingJitter: 0.03,  velocitySpread: 18, swingAmount: 0.33, driftRate: 0.004, accentDownbeats: false, ghostNoteChance: 0.15 },
+  modal_jazz:    { timingJitter: 0.028, velocitySpread: 16, swingAmount: 0.2,  driftRate: 0.005, accentDownbeats: false, ghostNoteChance: 0.1 },
   neo_soul:      { timingJitter: 0.035, velocitySpread: 16, swingAmount: 0.25, driftRate: 0.005, accentDownbeats: false, ghostNoteChance: 0.12 },
   ambient:       { timingJitter: 0.04,  velocitySpread: 10, swingAmount: 0,    driftRate: 0.01,  accentDownbeats: false, ghostNoteChance: 0 },
   minimalist:    { timingJitter: 0.008, velocitySpread: 6,  swingAmount: 0,    driftRate: 0.002, accentDownbeats: false, ghostNoteChance: 0 },
@@ -39,7 +41,7 @@ function applySwing(startBeat: number, swingAmount: number, beatsPerBar: number)
 
   if (isOffbeat) {
     const barPos = startBeat % beatsPerBar;
-    const isWeakBeat = barPos >= 1 && barPos < 2 || barPos >= 3;
+    const isWeakBeat = (barPos >= 1 && barPos < 2) || barPos >= 3;
     const swing = isWeakBeat ? swingAmount * 0.15 : swingAmount * 0.12;
     return startBeat + swing;
   }
@@ -47,13 +49,71 @@ function applySwing(startBeat: number, swingAmount: number, beatsPerBar: number)
   return startBeat;
 }
 
+/** Amount-based humanization (0-10 slider). Used by melody generators. */
+export function humanize(notes: Note[], amount: number): Note[] {
+  if (amount <= 0) return notes;
+
+  const factor = amount / 10;
+  const timingJitter = 0.04 * factor;
+  const velocitySpread = 12 * factor;
+  const durationVariance = 0.06 * factor;
+  const legatoThreshold = 0.12;
+
+  return notes.map((note, i) => {
+    const timeOffset = gaussianRandom() * timingJitter;
+    const velOffset = Math.round(gaussianRandom() * velocitySpread);
+    const durScale = 1 + gaussianRandom() * durationVariance;
+
+    let startBeat = Math.max(0, note.startBeat + timeOffset);
+
+    const isOnDownbeat = Math.abs(note.startBeat - Math.round(note.startBeat)) < 0.01;
+    if (isOnDownbeat && Math.random() > 0.5) {
+      startBeat = note.startBeat + Math.abs(timeOffset) * 0.3;
+    }
+
+    let velocity = Math.max(20, Math.min(127, note.velocity + velOffset));
+
+    const beatPos = note.startBeat % 4;
+    if (beatPos < 0.01) velocity = Math.min(127, velocity + Math.round(4 * factor));
+    else if (Math.abs(beatPos - 2) < 0.01) velocity = Math.min(127, velocity + Math.round(2 * factor));
+
+    let duration = note.duration * durScale;
+
+    if (i < notes.length - 1) {
+      const gap = notes[i + 1].startBeat - (startBeat + duration);
+      if (gap > 0 && gap < legatoThreshold * factor) {
+        duration += gap * 0.7;
+      }
+    }
+
+    return {
+      ...note,
+      startBeat,
+      velocity,
+      duration: Math.max(0.05, duration),
+    };
+  });
+}
+
+/** Style-aware humanization with swing, ghost notes, drift. */
 export function humanizeTrack(
   notes: Note[],
   style: CompositionStyle,
   trackName: string,
   beatsPerBar: number = 4,
+  amount: number = 5,
 ): Note[] {
-  const opts = STYLE_HUMANIZE[style] ?? STYLE_HUMANIZE.classical;
+  if (amount <= 0) return notes;
+  const scale = Math.min(amount, 10) / 10;
+  const base = STYLE_HUMANIZE[style] ?? STYLE_HUMANIZE.classical;
+  const opts: HumanizeOptions = {
+    timingJitter: base.timingJitter * scale,
+    velocitySpread: base.velocitySpread * scale,
+    swingAmount: base.swingAmount * scale,
+    driftRate: base.driftRate * scale,
+    accentDownbeats: base.accentDownbeats,
+    ghostNoteChance: base.ghostNoteChance * scale,
+  };
 
   if (trackName === 'Drums') {
     return humanizeDrums(notes, opts, beatsPerBar);

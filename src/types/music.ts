@@ -10,7 +10,9 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'minor11' | 'major11' | 'dominant13'
+  | 'minor_major7' | 'dominant7sharp9' | 'dominant7flat9';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -48,13 +50,15 @@ export interface CompositionParams {
   melodicDensity: number;      // 1-10
   rhythmicVariety: number;     // 1-10
   expressiveness: number;      // 1-10
+  humanize: number;            // 0-10: micro-timing & velocity variation
 }
 
 export type CompositionStyle =
   | 'classical' | 'romantic' | 'impressionist'
   | 'jazz' | 'neo_soul' | 'ambient'
   | 'minimalist' | 'cinematic' | 'electronic'
-  | 'bossa_nova' | 'lo_fi' | 'gospel';
+  | 'bossa_nova' | 'modal_jazz' | 'post_romantic'
+  | 'lo_fi' | 'gospel';
 
 export type DynamicCurve = 'crescendo' | 'decrescendo' | 'swell' | 'terraced' | 'flat' | 'dramatic';
 
@@ -75,8 +79,9 @@ export type InstrumentType =
   | 'piano' | 'strings' | 'bass' | 'pads'
   | 'bells' | 'brass' | 'woodwind' | 'drums'
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
+  | 'vibraphone' | 'celeste' | 'cello'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
-  | 'vibraphone' | 'clavinet' | 'tape_keys'
+  | 'clavinet' | 'tape_keys'
   | 'sub_bass' | 'warm_pad';
 
 export interface TrackEffect {
@@ -104,6 +109,12 @@ export interface TransportState {
   loopEnd: number;
 }
 
+
+export type TimeSignaturePreset = {
+  value: [number, number];
+  label: string;
+};
+
 // ---------------------------------------------------------------------------
 // Section / Arrangement intelligence
 // ---------------------------------------------------------------------------
@@ -114,9 +125,7 @@ export interface Section {
   kind: SectionKind;
   startMeasure: number;
   lengthMeasures: number;
-  /** Per-track presence: 0 = silent, 0.5 = sparse/textural, 1 = full */
   trackPresence: Record<string, number>;
-  /** 0-1 tension level for this section */
   tension: number;
 }
 
@@ -126,7 +135,7 @@ export interface Section {
 
 export interface TensionPoint {
   beat: number;
-  tension: number;  // 0-1
+  tension: number;
 }
 
 export type TensionCurve = TensionPoint[];

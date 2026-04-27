@@ -18,6 +18,7 @@ import {
   initAudio,
   setLoop,
   disableLoop,
+  exportWav,
 } from '../engine/audio';
 
 interface ComposerStore {
@@ -26,8 +27,9 @@ interface ComposerStore {
   transport: TransportState;
   selectedTrackId: string | null;
   isGenerating: boolean;
+  isExporting: boolean;
   compositionHistory: Composition[];
-  activeView: 'arrange' | 'mixer' | 'piano_roll';
+  activeView: 'arrange' | 'mixer' | 'piano_roll' | 'score';
 
   setParam: <K extends keyof CompositionParams>(key: K, value: CompositionParams[K]) => void;
   generate: () => Promise<void>;
@@ -39,9 +41,10 @@ interface ComposerStore {
   updateTrackPan: (trackId: string, pan: number) => void;
   toggleTrackMute: (trackId: string) => void;
   toggleTrackSolo: (trackId: string) => void;
-  setActiveView: (view: 'arrange' | 'mixer' | 'piano_roll') => void;
+  setActiveView: (view: 'arrange' | 'mixer' | 'piano_roll' | 'score') => void;
   setTempo: (bpm: number) => void;
   toggleLoop: () => void;
+  exportComposition: () => Promise<void>;
 }
 
 const DEFAULT_PARAMS: CompositionParams = {
@@ -56,6 +59,7 @@ const DEFAULT_PARAMS: CompositionParams = {
   melodicDensity: 5,
   rhythmicVariety: 5,
   expressiveness: 6,
+  humanize: 4,
 };
 
 export const useStore = create<ComposerStore>((set, get) => ({
@@ -70,6 +74,7 @@ export const useStore = create<ComposerStore>((set, get) => ({
   },
   selectedTrackId: null,
   isGenerating: false,
+  isExporting: false,
   compositionHistory: [],
   activeView: 'arrange',
 
@@ -228,5 +233,23 @@ export const useStore = create<ComposerStore>((set, get) => ({
       }
       return { transport: { ...state.transport, loop: newLoop } };
     });
+  },
+
+  exportComposition: async () => {
+    const { composition } = get();
+    if (!composition) return;
+
+    set({ isExporting: true });
+    try {
+      const blob = await exportWav(composition);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${composition.name.replace(/\s+/g, '_')}.wav`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } finally {
+      set({ isExporting: false });
+    }
   },
 }));

@@ -8,10 +8,10 @@ interface SectionTemplate {
   trackPresence: Record<string, number>;
 }
 
-const TRACK_NAMES = ['Melody', 'Harmony', 'Bass', 'Arpeggio', 'CounterMelody', 'Drums'] as const;
+const TRACK_NAMES = ['Melody', 'Harmony', 'Bass', 'Arpeggio', 'Countermelody', 'Drums'] as const;
 
 function tp(melody: number, harmony: number, bass: number, arp: number, counter: number, drums: number): Record<string, number> {
-  return { Melody: melody, Harmony: harmony, Bass: bass, Arpeggio: arp, CounterMelody: counter, Drums: drums };
+  return { Melody: melody, Harmony: harmony, Bass: bass, Arpeggio: arp, Countermelody: counter, Drums: drums };
 }
 
 const STYLE_ARCS: Record<CompositionStyle, SectionTemplate[]> = {
@@ -30,6 +30,14 @@ const STYLE_ARCS: Record<CompositionStyle, SectionTemplate[]> = {
     { kind: 'breakdown', weight: 1, tension: 0.3,  trackPresence: tp(0.6, 0.5, 0, 0.3, 0, 0) },
     { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.4, 0, 0, 0, 0) },
   ],
+  post_romantic: [
+    { kind: 'intro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.4, 0, 0, 0, 0) },
+    { kind: 'verse',     weight: 2, tension: 0.45, trackPresence: tp(1, 0.8, 0.6, 0.3, 0, 0.2) },
+    { kind: 'build',     weight: 2, tension: 0.75, trackPresence: tp(1, 1, 0.9, 0.6, 0.6, 0.5) },
+    { kind: 'climax',    weight: 2, tension: 1.0,  trackPresence: tp(1, 1, 1, 1, 1, 0.8) },
+    { kind: 'breakdown', weight: 1, tension: 0.3,  trackPresence: tp(0.6, 0.6, 0, 0.3, 0, 0) },
+    { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.5, 0, 0, 0, 0) },
+  ],
   impressionist: [
     { kind: 'intro',     weight: 2, tension: 0.15, trackPresence: tp(0, 0.5, 0, 0.5, 0, 0) },
     { kind: 'verse',     weight: 2, tension: 0.35, trackPresence: tp(0.8, 0.7, 0.4, 0.6, 0, 0.2) },
@@ -43,6 +51,13 @@ const STYLE_ARCS: Record<CompositionStyle, SectionTemplate[]> = {
     { kind: 'climax',    weight: 2, tension: 0.8,  trackPresence: tp(1, 0.8, 1, 0.6, 0.7, 1) },
     { kind: 'breakdown', weight: 1, tension: 0.3,  trackPresence: tp(0.5, 0.5, 1, 0, 0.5, 0.5) },
     { kind: 'outro',     weight: 1, tension: 0.2,  trackPresence: tp(0.6, 0.5, 0.8, 0, 0, 0.5) },
+  ],
+  modal_jazz: [
+    { kind: 'intro',     weight: 1, tension: 0.15, trackPresence: tp(0, 0.4, 0.5, 0, 0, 0.5) },
+    { kind: 'verse',     weight: 3, tension: 0.4,  trackPresence: tp(1, 0.5, 1, 0.3, 0, 0.7) },
+    { kind: 'climax',    weight: 2, tension: 0.7,  trackPresence: tp(1, 0.7, 1, 0.5, 0.6, 0.9) },
+    { kind: 'breakdown', weight: 1, tension: 0.25, trackPresence: tp(0.5, 0.4, 0.8, 0, 0.4, 0.4) },
+    { kind: 'outro',     weight: 1, tension: 0.15, trackPresence: tp(0.5, 0.4, 0.7, 0, 0, 0.4) },
   ],
   neo_soul: [
     { kind: 'intro',     weight: 1, tension: 0.15, trackPresence: tp(0, 0.6, 0.4, 0, 0, 0.4) },

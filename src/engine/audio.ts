@@ -6,7 +6,7 @@ let initialized = false;
 
 const instruments: Map<string, Tone.PolySynth | Tone.NoiseSynth | Tone.MembraneSynth | Tone.MetalSynth> = new Map();
 const channels: Map<string, Tone.Channel> = new Map();
-const effects: Map<string, Tone.ToneAudioNode[]> = new Map();
+const effectNodes: Map<string, Tone.ToneAudioNode[]> = new Map();
 const drumSynthInstances: (Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth)[] = [];
 
 const masterReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).toDestination();
@@ -54,6 +54,38 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
       oscillator: { type: 'fatsawtooth', spread: 25, count: 4 },
       envelope: { attack: 0.6, decay: 0.5, sustain: 0.8, release: 3 },
       volume: -12,
+    }),
+  },
+  woodwind: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2,
+      modulationIndex: 1.5,
+      oscillator: { type: 'sine' },
+      modulation: { type: 'triangle' },
+      envelope: { attack: 0.08, decay: 0.4, sustain: 0.5, release: 1.2 },
+      modulationEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.6, release: 0.8 },
+      volume: -14,
+    }),
+  },
+  cello: {
+    create: () => new Tone.PolySynth(Tone.AMSynth, {
+      harmonicity: 1.5,
+      oscillator: { type: 'fatsawtooth', spread: 15, count: 2 },
+      modulation: { type: 'sine' },
+      envelope: { attack: 0.3, decay: 0.5, sustain: 0.7, release: 2 },
+      modulationEnvelope: { attack: 0.5, decay: 0.8, sustain: 0.4, release: 1.5 },
+      volume: -10,
+    }),
+  },
+  celeste: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 6,
+      modulationIndex: 0.6,
+      oscillator: { type: 'sine' },
+      modulation: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 1, sustain: 0, release: 2.5 },
+      modulationEnvelope: { attack: 0.001, decay: 0.6, sustain: 0, release: 2 },
+      volume: -16,
     }),
   },
   vibraphone: {
@@ -249,11 +281,11 @@ export async function initAudio(): Promise<void> {
 export function disposeAll(): void {
   instruments.forEach(inst => inst.dispose());
   channels.forEach(ch => ch.dispose());
-  effects.forEach(fxArr => fxArr.forEach(fx => fx.dispose()));
+  effectNodes.forEach(fxArr => fxArr.forEach(fx => fx.dispose()));
   drumSynthInstances.forEach(ds => ds.dispose());
   instruments.clear();
   channels.clear();
-  effects.clear();
+  effectNodes.clear();
   drumSynthInstances.length = 0;
 }
 
@@ -287,7 +319,7 @@ export function buildComposition(composition: Composition): void {
 
     instruments.set(track.id, instrument);
     channels.set(track.id, channel);
-    effects.set(track.id, fxChain);
+    effectNodes.set(track.id, fxChain);
 
     scheduleTrackNotes(track, instrument, fxChain, channel);
   }
@@ -318,13 +350,17 @@ function scheduleTrackNotes(
       kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 6, volume: -6 }),
       snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0 }, volume: -10 }),
       hihat: new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5, volume: -16 }),
+      rimshot: new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: -14 }),
+      tom: new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 4, volume: -10 }),
     };
 
-    drumSynthInstances.push(drumSynths.kick, drumSynths.snare, drumSynths.hihat);
+    drumSynthInstances.push(drumSynths.kick, drumSynths.snare, drumSynths.hihat, drumSynths.rimshot, drumSynths.tom);
 
     connectDrumSynthToChain(drumSynths.kick, fxChain, channel);
     connectDrumSynthToChain(drumSynths.snare, fxChain, channel);
     connectDrumSynthToChain(drumSynths.hihat, fxChain, channel);
+    connectDrumSynthToChain(drumSynths.rimshot, fxChain, channel);
+    connectDrumSynthToChain(drumSynths.tom, fxChain, channel);
 
     for (const note of track.notes) {
       const time = `0:${note.startBeat}:0`;
@@ -338,18 +374,24 @@ function scheduleTrackNotes(
         transport.schedule((t) => {
           drumSynths.snare.triggerAttackRelease('8n', t, vel);
         }, time);
+      } else if (note.pitch === 37) {
+        transport.schedule((t) => {
+          drumSynths.rimshot.triggerAttackRelease('16n', t, vel * 0.6);
+        }, time);
+      } else if (note.pitch === 45 || note.pitch === 50) {
+        const tomNote = note.pitch === 50 ? 'A1' : 'D1';
+        transport.schedule((t) => {
+          drumSynths.tom.triggerAttackRelease(tomNote, '8n', t, vel * 0.7);
+        }, time);
       } else if (note.pitch === 49 || note.pitch === 51) {
-        // crash / ride — longer decay, full velocity
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('4n', t, vel * 0.7);
         }, time);
       } else if (note.pitch === 46) {
-        // open hihat — medium decay
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('8n', t, vel * 0.5);
         }, time);
       } else {
-        // closed hihat (42) and fallback
         transport.schedule((t) => {
           drumSynths.hihat.triggerAttackRelease('32n', t, vel * 0.3);
         }, time);
@@ -445,6 +487,151 @@ export function setLoop(start: number, end: number): void {
 
 export function disableLoop(): void {
   Tone.getTransport().loop = false;
+}
+
+export async function exportWav(composition: Composition): Promise<Blob> {
+  const totalBeats = composition.params.measures * composition.params.timeSignature[0];
+  const bpm = composition.params.tempo;
+  const durationSeconds = (totalBeats / bpm) * 60 + 2;
+
+  const buffer = await Tone.Offline(async ({ transport }) => {
+    transport.bpm.value = bpm;
+    transport.timeSignature = composition.params.timeSignature;
+
+    const offlineLimiter = new Tone.Limiter(-1).toDestination();
+    const offlineComp = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(offlineLimiter);
+    const offlineReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).connect(offlineComp);
+    await offlineReverb.ready;
+
+    const anySoloed = composition.tracks.some(t => t.solo);
+
+    for (const track of composition.tracks) {
+      if (track.muted) continue;
+      if (anySoloed && !track.solo) continue;
+
+      const instrument = createInstrument(track.name, track.instrument);
+      const channel = new Tone.Channel({
+        volume: Tone.gainToDb(track.volume),
+        pan: track.pan,
+      }).connect(offlineReverb);
+
+      const fxChain = createTrackEffects(track);
+      for (const fx of fxChain) {
+        if (fx instanceof Tone.Reverb) await (fx as Tone.Reverb).ready;
+      }
+      if (fxChain.length > 0) {
+        instrument.connect(fxChain[0]);
+        for (let i = 0; i < fxChain.length - 1; i++) {
+          fxChain[i].connect(fxChain[i + 1]);
+        }
+        fxChain[fxChain.length - 1].connect(channel);
+      } else {
+        instrument.connect(channel);
+      }
+
+      if (track.name === 'Drums') {
+        const drumSynths = {
+          kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 6, volume: -6 }),
+          snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0 }, volume: -10 }),
+          hihat: new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5, volume: -16 }),
+          rimshot: new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: -14 }),
+          tom: new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 4, volume: -10 }),
+        };
+
+        const connectDrum = (s: Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth) => {
+          if (fxChain.length > 0) s.connect(fxChain[0]); else s.connect(channel);
+        };
+        connectDrum(drumSynths.kick);
+        connectDrum(drumSynths.snare);
+        connectDrum(drumSynths.hihat);
+        connectDrum(drumSynths.rimshot);
+        connectDrum(drumSynths.tom);
+
+        for (const note of track.notes) {
+          const time = `0:${note.startBeat}:0`;
+          const vel = note.velocity / 127;
+          if (note.pitch === 36) {
+            transport.schedule((t) => drumSynths.kick.triggerAttackRelease('C1', '8n', t, vel), time);
+          } else if (note.pitch === 38) {
+            transport.schedule((t) => drumSynths.snare.triggerAttackRelease('8n', t, vel), time);
+          } else if (note.pitch === 37) {
+            transport.schedule((t) => drumSynths.rimshot.triggerAttackRelease('16n', t, vel * 0.6), time);
+          } else if (note.pitch === 45 || note.pitch === 50) {
+            const tn = note.pitch === 50 ? 'A1' : 'D1';
+            transport.schedule((t) => drumSynths.tom.triggerAttackRelease(tn, '8n', t, vel * 0.7), time);
+          } else if (note.pitch === 49 || note.pitch === 51) {
+            transport.schedule((t) => drumSynths.hihat.triggerAttackRelease('4n', t, vel * 0.7), time);
+          } else if (note.pitch === 46) {
+            transport.schedule((t) => drumSynths.hihat.triggerAttackRelease('8n', t, vel * 0.5), time);
+          } else {
+            transport.schedule((t) => drumSynths.hihat.triggerAttackRelease('32n', t, vel * 0.3), time);
+          }
+        }
+      } else if (instrument instanceof Tone.PolySynth) {
+        for (const note of track.notes) {
+          const time = `0:${note.startBeat}:0`;
+          const noteName = midiNoteToString(note.pitch);
+          const dur = `0:${note.duration}:0`;
+          const vel = note.velocity / 127;
+          transport.schedule((t) => {
+            try { instrument.triggerAttackRelease(noteName, dur, t, vel); } catch { /* skip */ }
+          }, time);
+        }
+      }
+    }
+
+    transport.start();
+  }, durationSeconds);
+
+  return bufferToWav(buffer);
+}
+
+function bufferToWav(buffer: Tone.ToneAudioBuffer): Blob {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length;
+  const rawData = new Float32Array(length * numChannels);
+
+  for (let ch = 0; ch < numChannels; ch++) {
+    const channelData = buffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      rawData[i * numChannels + ch] = channelData[i];
+    }
+  }
+
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const dataSize = length * blockAlign;
+  const headerSize = 44;
+  const arrayBuffer = new ArrayBuffer(headerSize + dataSize);
+  const view = new DataView(arrayBuffer);
+
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, headerSize + dataSize - 8, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bytesPerSample * 8, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (let i = 0; i < rawData.length; i++) {
+    const sample = Math.max(-1, Math.min(1, rawData[i]));
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+    offset += 2;
+  }
+
+  return new Blob([arrayBuffer], { type: 'audio/wav' });
 }
 
 let analyserNode: Tone.Analyser | null = null;

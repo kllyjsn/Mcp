@@ -4,8 +4,9 @@ import { CompositionPanel } from './components/CompositionPanel';
 import { ArrangementView } from './components/ArrangementView';
 import { MixerView } from './components/MixerView';
 import { PianoRollView } from './components/PianoRollView';
+import { ScoreView } from './components/ScoreView';
 import { ChordDisplay } from './components/ChordDisplay';
-import { LayoutGrid, Sliders, Piano } from 'lucide-react';
+import { LayoutGrid, Sliders, Piano, FileText } from 'lucide-react';
 
 function ViewTab({ active, onClick, icon: Icon, label }: {
   active: boolean;
@@ -66,6 +67,12 @@ export default function App() {
             icon={Piano}
             label="Piano Roll"
           />
+          <ViewTab
+            active={activeView === 'score'}
+            onClick={() => setActiveView('score')}
+            icon={FileText}
+            label="Score"
+          />
         </div>
 
         <div className="w-44" />
@@ -81,6 +88,7 @@ export default function App() {
           {activeView === 'arrange' && <ArrangementView />}
           {activeView === 'mixer' && <MixerView />}
           {activeView === 'piano_roll' && <PianoRollView />}
+          {activeView === 'score' && <ScoreView />}
           {composition && <ChordDisplay />}
         </div>
       </div>
