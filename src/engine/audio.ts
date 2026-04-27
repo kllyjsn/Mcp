@@ -466,23 +466,14 @@ function scheduleTrackNotes(
   for (const note of track.notes) {
     const time = `0:${note.startBeat}:0`;
     const noteName = midiNoteToString(note.pitch);
-    const graceOffset = note.isGraceNote ? 0.06 : 0;
     const duration = note.isGraceNote ? '32n' : `0:${note.duration}:0`;
     const velocity = note.velocity / 127;
 
-    if (graceOffset > 0) {
-      transport.schedule((t) => {
-        try {
-          instrument.triggerAttackRelease(noteName, duration, t, velocity);
-        } catch { /* note out of range */ }
-      }, time);
-    } else {
-      transport.schedule((t) => {
-        try {
-          instrument.triggerAttackRelease(noteName, duration, t, velocity);
-        } catch { /* note out of range */ }
-      }, time);
-    }
+    transport.schedule((t) => {
+      try {
+        instrument.triggerAttackRelease(noteName, duration, t, velocity);
+      } catch { /* note out of range */ }
+    }, time);
   }
 }
 
