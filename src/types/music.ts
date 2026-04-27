@@ -10,7 +10,8 @@ export type ChordQuality =
   | 'major' | 'minor' | 'diminished' | 'augmented'
   | 'dominant7' | 'major7' | 'minor7' | 'diminished7'
   | 'half_diminished7' | 'augmented7'
-  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9';
+  | 'sus2' | 'sus4' | 'add9' | 'minor9' | 'major9'
+  | 'dominant9' | 'minor11' | 'dominant13' | 'major6' | 'minor6';
 
 export interface Note {
   pitch: number;       // MIDI note number 0-127
@@ -77,12 +78,23 @@ export type InstrumentType =
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
   | 'vibraphone' | 'clavinet' | 'tape_keys'
-  | 'sub_bass' | 'warm_pad';
+  | 'rhodes' | 'analog_bass' | 'warm_pad' | 'pluck'
+  | 'celeste' | 'muted_trumpet' | 'soft_brass';
 
 export interface TrackEffect {
-  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
+  type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'widen' | 'saturator';
   wet: number;
   params: Record<string, number>;
+}
+
+export type SectionKind = 'intro' | 'verse' | 'build' | 'climax' | 'breakdown' | 'outro';
+
+export interface Section {
+  kind: SectionKind;
+  startMeasure: number;
+  lengthMeasures: number;
+  trackPresence: Record<string, number>;
+  tension: number;
 }
 
 export interface Composition {
@@ -92,7 +104,6 @@ export interface Composition {
   tracks: Track[];
   chordProgression: Chord[];
   sections: Section[];
-  tensionCurve: TensionCurve;
   createdAt: number;
 }
 
@@ -103,30 +114,3 @@ export interface TransportState {
   loopStart: number;
   loopEnd: number;
 }
-
-// ---------------------------------------------------------------------------
-// Section / Arrangement intelligence
-// ---------------------------------------------------------------------------
-
-export type SectionKind = 'intro' | 'verse' | 'build' | 'climax' | 'breakdown' | 'outro';
-
-export interface Section {
-  kind: SectionKind;
-  startMeasure: number;
-  lengthMeasures: number;
-  /** Per-track presence: 0 = silent, 0.5 = sparse/textural, 1 = full */
-  trackPresence: Record<string, number>;
-  /** 0-1 tension level for this section */
-  tension: number;
-}
-
-// ---------------------------------------------------------------------------
-// Tension / Release arc
-// ---------------------------------------------------------------------------
-
-export interface TensionPoint {
-  beat: number;
-  tension: number;  // 0-1
-}
-
-export type TensionCurve = TensionPoint[];

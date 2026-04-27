@@ -1,7 +1,7 @@
-import type { Note, Chord, CompositionParams, Section, TensionCurve } from '../types/music';
+import type { Note, Chord, CompositionParams } from '../types/music';
 import { getScaleNotesMultiOctave, nearestScaleNote } from './scales';
-import { getTensionAtBeat, tensionToVelocityMod, tensionToRegisterShift, tensionToDensityScale } from './tension';
-import { getTrackPresenceAtBeat } from './sections';
+import type { TensionCurve, PhraseStructure } from './tension';
+import { tensionAtBeat, isCadenceRegion, isClimaxRegion } from './tension';
 
 function weightedRandom(weights: number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
@@ -80,6 +80,16 @@ function applyDynamics(notes: Note[], curve: string): Note[] {
   });
 }
 
+// ── Tension-aware dynamics: layer tension curve on top of the static dynamic curve ──
+function applyTensionDynamics(notes: Note[], tension: TensionCurve | undefined): Note[] {
+  if (!tension) return notes;
+  return notes.map(note => {
+    const t = tensionAtBeat(tension, note.startBeat);
+    const boost = Math.round(t * 18 - 5);
+    return { ...note, velocity: Math.max(20, Math.min(127, note.velocity + boost)) };
+  });
+}
+
 interface Motif {
   intervals: number[];
   durations: number[];
@@ -104,7 +114,7 @@ function generateMotif(_scaleNotes: number[], density: number): Motif {
   return { intervals, durations };
 }
 
-function developMotif(motif: Motif, technique: 'repeat' | 'sequence' | 'inversion' | 'augment', transposeSteps: number): Motif {
+function developMotif(motif: Motif, technique: 'repeat' | 'sequence' | 'inversion' | 'augment' | 'retrograde' | 'diminution', transposeSteps: number): Motif {
   switch (technique) {
     case 'repeat':
       return { ...motif };
@@ -123,6 +133,16 @@ function developMotif(motif: Motif, technique: 'repeat' | 'sequence' | 'inversio
         intervals: [...motif.intervals],
         durations: motif.durations.map(d => d * 1.5),
       };
+    case 'retrograde':
+      return {
+        intervals: [...motif.intervals].reverse(),
+        durations: [...motif.durations].reverse(),
+      };
+    case 'diminution':
+      return {
+        intervals: [...motif.intervals],
+        durations: motif.durations.map(d => d * 0.66),
+      };
   }
 }
 
@@ -130,18 +150,17 @@ export function generateMelody(
   params: CompositionParams,
   chords: Chord[],
   octaveRange: [number, number] = [4, 6],
-  sections?: Section[],
-  tensionCurve?: TensionCurve,
+  tension?: TensionCurve,
+  phrases?: PhraseStructure[],
 ): Note[] {
   const scaleNotes = getScaleNotesMultiOctave(params.key, params.scale, octaveRange[0], octaveRange[1]);
   const totalBeats = params.measures * params.timeSignature[0];
   const density = params.melodicDensity / 10;
-  const beatsPerBar = params.timeSignature[0];
 
   const useMotif = params.expressiveness >= 5;
 
   if (useMotif) {
-    return generateMotifMelody(params, chords, scaleNotes, totalBeats, sections, tensionCurve);
+    return generateMotifMelody(params, chords, scaleNotes, totalBeats, tension, phrases);
   }
 
   const contour = generateContour(totalBeats, density);
@@ -155,17 +174,14 @@ export function generateMelody(
     const duration = rhythmPattern[i];
     const contourPoint = contour[Math.min(i, contour.length - 1)];
 
-    const tension = tensionCurve ? getTensionAtBeat(tensionCurve, currentBeat) : 0.5;
-    const presence = sections ? getTrackPresenceAtBeat(sections, 'Melody', currentBeat, beatsPerBar) : 1;
+    let targetPitch = centerPitch + contourPoint.target;
 
-    if (presence <= 0) {
-      currentBeat += duration;
-      continue;
+    // Tension-aware: widen register at climax, narrow at cadence
+    if (tension) {
+      const t = tensionAtBeat(tension, currentBeat);
+      targetPitch += Math.round((t - 0.5) * 6);
     }
 
-    const registerShift = tensionCurve ? tensionToRegisterShift(tension) : 0;
-
-    let targetPitch = centerPitch + contourPoint.target + registerShift;
     targetPitch = nearestScaleNote(targetPitch, params.key, params.scale);
 
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
@@ -189,21 +205,18 @@ export function generateMelody(
       }
     }
 
-    const isRest = Math.random() > (0.85 - (1 - presence) * 0.3) && params.melodicDensity < 7;
+    // Breathing: insert rests at cadence regions for musical phrasing
+    const atCadence = tension ? isCadenceRegion(tension, currentBeat, 1) : false;
+    const isRest = (Math.random() > 0.85 && params.melodicDensity < 7) ||
+                   (atCadence && Math.random() > 0.5);
 
-    // Phrase breathing: insert rests near phrase boundaries (every 4 bars)
-    const phrasePos = currentBeat % (beatsPerBar * 4);
-    const nearPhraseEnd = phrasePos > beatsPerBar * 3.5;
-    const breathRest = nearPhraseEnd && Math.random() > 0.5;
-
-    if (!isRest && !breathRest) {
-      const velMod = tensionCurve ? tensionToVelocityMod(tension) : 1;
+    if (!isRest) {
       const baseVelocity = 60 + Math.floor(params.expressiveness * 5);
       const accentVariation = Math.floor(Math.random() * 30 * (params.expressiveness / 10));
 
       notes.push({
         pitch: targetPitch,
-        velocity: Math.min(127, Math.round((baseVelocity + accentVariation) * velMod)),
+        velocity: Math.min(127, baseVelocity + accentVariation),
         duration: duration * (0.8 + Math.random() * 0.15),
         startBeat: currentBeat,
       });
@@ -212,7 +225,9 @@ export function generateMelody(
     currentBeat += duration;
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 function generateMotifMelody(
@@ -220,30 +235,37 @@ function generateMotifMelody(
   chords: Chord[],
   scaleNotes: number[],
   totalBeats: number,
-  sections?: Section[],
-  tensionCurve?: TensionCurve,
+  tension?: TensionCurve,
+  phrases?: PhraseStructure[],
 ): Note[] {
   const notes: Note[] = [];
   const centerIdx = Math.floor(scaleNotes.length / 2);
-  const beatsPerBar = params.timeSignature[0];
   const motif = generateMotif(scaleNotes, params.melodicDensity);
-  const techniques: Array<'repeat' | 'sequence' | 'inversion' | 'augment'> = ['repeat', 'sequence', 'inversion', 'augment'];
+  const techniques: Array<'repeat' | 'sequence' | 'inversion' | 'augment' | 'retrograde' | 'diminution'> =
+    ['repeat', 'sequence', 'inversion', 'augment', 'retrograde', 'diminution'];
 
   let currentBeat = 0;
   let phraseCount = 0;
 
   while (currentBeat < totalBeats) {
-    const presence = sections ? getTrackPresenceAtBeat(sections, 'Melody', currentBeat, beatsPerBar) : 1;
-    if (presence <= 0) {
-      currentBeat += 1;
-      continue;
+    // Antecedent-consequent: repeat motif literally for antecedent phrases,
+    // develop it for consequent phrases
+    const currentPhrase = phrases?.find(p => currentBeat >= p.start && currentBeat < p.end);
+    let technique: typeof techniques[number];
+
+    if (phraseCount === 0) {
+      technique = 'repeat';
+    } else if (currentPhrase?.type === 'consequent') {
+      technique = Math.random() > 0.5 ? 'inversion' : 'sequence';
+    } else if (currentPhrase?.type === 'development') {
+      technique = techniques[1 + Math.floor(Math.random() * (techniques.length - 1))];
+    } else if (currentPhrase?.type === 'coda') {
+      technique = Math.random() > 0.5 ? 'augment' : 'retrograde';
+    } else {
+      technique = techniques[Math.floor(Math.random() * techniques.length)];
     }
 
-    const tension = tensionCurve ? getTensionAtBeat(tensionCurve, currentBeat) : 0.5;
-    const registerShift = tensionCurve ? tensionToRegisterShift(tension) : 0;
-
-    const technique = phraseCount === 0 ? 'repeat' : techniques[Math.floor(Math.random() * techniques.length)];
-    const transposeSteps = Math.floor(Math.random() * 5) - 2 + Math.round(registerShift * 0.3);
+    const transposeSteps = Math.floor(Math.random() * 5) - 2;
     const developed = developMotif(motif, technique, transposeSteps);
 
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
@@ -251,9 +273,18 @@ function generateMotifMelody(
     for (let i = 0; i < developed.intervals.length; i++) {
       if (currentBeat >= totalBeats) break;
 
-      let scaleIdx = centerIdx + developed.intervals[i] + Math.round(registerShift * 0.5);
+      let scaleIdx = centerIdx + developed.intervals[i];
       scaleIdx = Math.max(0, Math.min(scaleNotes.length - 1, scaleIdx));
       let pitch = scaleNotes[scaleIdx];
+
+      // Tension-aware pitch adjustment
+      if (tension) {
+        const t = tensionAtBeat(tension, currentBeat);
+        if (isClimaxRegion(tension, currentBeat, 2)) {
+          pitch = Math.min(scaleNotes[scaleNotes.length - 1], pitch + Math.round(t * 5));
+          pitch = nearestScaleNote(pitch, params.key, params.scale);
+        }
+      }
 
       if (activeChord && Math.random() > 0.55) {
         const chordTones = activeChord.voicing.map(v => v + 12);
@@ -266,15 +297,14 @@ function generateMotifMelody(
         }
       }
 
-      const densityScale = tensionCurve ? tensionToDensityScale(tension) : 1;
-      const dur = Math.min(developed.durations[i] / densityScale, totalBeats - currentBeat);
-      const velMod = tensionCurve ? tensionToVelocityMod(tension) : 1;
+      const dur = Math.min(developed.durations[i], totalBeats - currentBeat);
       const baseVelocity = 60 + Math.floor(params.expressiveness * 5);
       const accent = i === 0 ? 10 : 0;
+      const peakAccent = (currentPhrase && Math.abs(currentBeat - currentPhrase.peakBeat) < 1) ? 12 : 0;
 
       notes.push({
         pitch,
-        velocity: Math.min(127, Math.round((baseVelocity + accent + Math.floor(Math.random() * 15)) * velMod)),
+        velocity: Math.min(127, baseVelocity + accent + peakAccent + Math.floor(Math.random() * 15)),
         duration: dur * (0.8 + Math.random() * 0.15),
         startBeat: currentBeat,
       });
@@ -282,28 +312,98 @@ function generateMotifMelody(
       currentBeat += dur;
     }
 
-    // Phrase breathing: longer rests between motifs at low tension
-    const restChance = tension < 0.4 ? 0.4 : 0.7;
-    if (Math.random() > restChance && currentBeat < totalBeats) {
-      const restDur = Math.min(0.5 + Math.random() * 0.5, totalBeats - currentBeat);
+    // Breathing rest between phrases — more likely at cadences
+    const atCadence = tension ? isCadenceRegion(tension, currentBeat) : false;
+    const restChance = atCadence ? 0.45 : 0.3;
+    if (Math.random() < restChance && currentBeat < totalBeats) {
+      const restDur = Math.min(atCadence ? 1 : 0.5 + Math.random() * 0.5, totalBeats - currentBeat);
       currentBeat += restDur;
     }
 
     phraseCount++;
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
+}
+
+// ── Counter-melody: a secondary melodic line that harmonically supports the main melody ──
+export function generateCounterMelody(
+  params: CompositionParams,
+  chords: Chord[],
+  mainMelodyNotes: Note[],
+  tension?: TensionCurve,
+): Note[] {
+  const notes: Note[] = [];
+  const totalBeats = params.measures * params.timeSignature[0];
+
+  const rhythmDensity = Math.max(1, params.melodicDensity - 2);
+  const rhythmPattern = generateRhythmPattern(totalBeats, rhythmDensity, Math.max(1, params.rhythmicVariety - 1));
+
+  let currentBeat = 0;
+
+  for (const duration of rhythmPattern) {
+    if (currentBeat >= totalBeats) break;
+
+    const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
+    if (!activeChord) { currentBeat += duration; continue; }
+
+    // Find main melody note near this beat to create complementary motion
+    const mainNote = mainMelodyNotes.find(n =>
+      Math.abs(n.startBeat - currentBeat) < 1
+    );
+
+    let pitch: number;
+    const chordTones = activeChord.voicing;
+
+    if (mainNote) {
+      // Move in contrary motion to the main melody
+      const candidates = chordTones.filter(ct => Math.abs(ct - mainNote.pitch) >= 3 && Math.abs(ct - mainNote.pitch) <= 12);
+      if (candidates.length > 0) {
+        pitch = candidates[Math.floor(Math.random() * candidates.length)];
+      } else {
+        pitch = chordTones[Math.floor(Math.random() * chordTones.length)];
+      }
+    } else {
+      // Use a chord tone, favoring 3rds and 5ths
+      pitch = chordTones[Math.min(1, chordTones.length - 1)];
+    }
+
+    pitch = nearestScaleNote(pitch, params.key, params.scale);
+
+    // Only play on some beats — counter melody should be sparser
+    const tensionVal = tension ? tensionAtBeat(tension, currentBeat) : 0.5;
+    const playChance = 0.4 + tensionVal * 0.3;
+
+    if (Math.random() < playChance) {
+      const baseVelocity = 45 + Math.floor(params.expressiveness * 3);
+      notes.push({
+        pitch,
+        velocity: Math.min(110, baseVelocity + Math.floor(Math.random() * 15)),
+        duration: duration * 0.7,
+        startBeat: currentBeat,
+      });
+    }
+
+    currentBeat += duration;
+  }
+
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 export function generateBassLine(
   params: CompositionParams,
   chords: Chord[],
+  tension?: TensionCurve,
 ): Note[] {
   if (params.style === 'jazz' || params.style === 'bossa_nova') {
-    return generateWalkingBass(params, chords);
+    return generateWalkingBass(params, chords, tension);
   }
   if (params.style === 'neo_soul' || params.style === 'lo_fi' || params.style === 'gospel') {
-    return generateGrooveBass(params, chords);
+    return generateGrooveBass(params, chords, tension);
   }
 
   const notes: Note[] = [];
@@ -315,10 +415,13 @@ export function generateBassLine(
     if (!activeChord) { currentBeat += 1; continue; }
 
     const rootMidi = Math.min(...activeChord.voicing) - 12;
-
     const chordDur = Math.min(activeChord.duration, totalBeats - currentBeat);
 
-    if (params.rhythmicVariety >= 6 && Math.random() > 0.5 && chordDur >= 2) {
+    // Tension-aware: busier bass on high tension, simple on low
+    const tensionVal = tension ? tensionAtBeat(tension, currentBeat) : 0.5;
+    const shouldSubdivide = params.rhythmicVariety >= 6 && Math.random() > (0.7 - tensionVal * 0.3) && chordDur >= 2;
+
+    if (shouldSubdivide) {
       const fifth = rootMidi + 7;
       if (chordDur >= 4) {
         notes.push({
@@ -366,12 +469,15 @@ export function generateBassLine(
     }
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 function generateWalkingBass(
   params: CompositionParams,
   chords: Chord[],
+  tension?: TensionCurve,
 ): Note[] {
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
@@ -403,7 +509,14 @@ function generateWalkingBass(
           pitch = rootMidi + 7;
         }
       } else {
-        pitch = chordTones[Math.floor(Math.random() * chordTones.length)];
+        // More chromatic approach tones at high tension
+        const tensionVal = tension ? tensionAtBeat(tension, currentBeat) : 0.5;
+        if (tensionVal > 0.6 && Math.random() > 0.5) {
+          const nextTarget = step < stepsInChord - 2 ? chordTones[Math.floor(Math.random() * chordTones.length)] : rootMidi + 7;
+          pitch = nextTarget + (Math.random() > 0.5 ? -1 : 1);
+        } else {
+          pitch = chordTones[Math.floor(Math.random() * chordTones.length)];
+        }
       }
 
       if (prevPitch !== 0 && Math.abs(pitch - prevPitch) > 7) {
@@ -427,12 +540,15 @@ function generateWalkingBass(
     if (remainder > 0.1) currentBeat += remainder;
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 function generateGrooveBass(
   params: CompositionParams,
   chords: Chord[],
+  tension?: TensionCurve,
 ): Note[] {
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
@@ -446,6 +562,8 @@ function generateGrooveBass(
     const fifth = rootMidi + 7;
     const octave = rootMidi + 12;
     const chordDur = Math.min(activeChord.duration, totalBeats - currentBeat);
+
+    const tensionVal = tension ? tensionAtBeat(tension, currentBeat) : 0.5;
 
     notes.push({ pitch: rootMidi, velocity: 90, duration: 0.4, startBeat: currentBeat });
 
@@ -463,7 +581,7 @@ function generateGrooveBass(
       });
     }
 
-    if (chordDur >= 3 && Math.random() > 0.4) {
+    if (chordDur >= 3 && (Math.random() > 0.4 || tensionVal > 0.6)) {
       notes.push({
         pitch: nearestScaleNote(rootMidi + 5, params.key, params.scale),
         velocity: 60 + Math.floor(Math.random() * 15),
@@ -472,7 +590,7 @@ function generateGrooveBass(
       });
     }
 
-    if (chordDur >= 3.5 && Math.random() > 0.5) {
+    if (chordDur >= 3.5 && (Math.random() > 0.5 || tensionVal > 0.7)) {
       notes.push({
         pitch: nearestScaleNote(rootMidi + 10, params.key, params.scale),
         velocity: 55 + Math.floor(Math.random() * 15),
@@ -484,42 +602,54 @@ function generateGrooveBass(
     currentBeat += chordDur;
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 export function generatePadVoicings(
   params: CompositionParams,
   chords: Chord[],
+  tension?: TensionCurve,
 ): Note[] {
   const notes: Note[] = [];
 
   for (const chord of chords) {
     const velocityBase = 40 + Math.floor(params.expressiveness * 4);
+    const tensionVal = tension ? tensionAtBeat(tension, chord.startBeat) : 0.5;
+    const tensionBoost = Math.round(tensionVal * 12);
 
     for (const pitch of chord.voicing) {
       notes.push({
         pitch,
-        velocity: velocityBase + Math.floor(Math.random() * 15),
+        velocity: Math.min(120, velocityBase + tensionBoost + Math.floor(Math.random() * 15)),
         duration: chord.duration * 0.95,
         startBeat: chord.startBeat,
       });
     }
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 export function generateArpeggio(
   params: CompositionParams,
   chords: Chord[],
+  tension?: TensionCurve,
 ): Note[] {
   const notes: Note[] = [];
-  const patterns = ['up', 'down', 'updown', 'random'] as const;
+  const patterns = ['up', 'down', 'updown', 'random', 'broken'] as const;
   const pattern = patterns[Math.floor(Math.random() * patterns.length)];
 
   for (const chord of chords) {
     const chordNotes = [...chord.voicing].sort((a, b) => a - b);
-    const notesPerBeat = params.melodicDensity >= 5 ? 2 : 1;
+
+    // Tension-aware density: more notes per beat at higher tension
+    const tensionVal = tension ? tensionAtBeat(tension, chord.startBeat) : 0.5;
+    const baseDensity = params.melodicDensity >= 5 ? 2 : 1;
+    const notesPerBeat = tensionVal > 0.6 ? baseDensity + 1 : baseDensity;
     const totalArpNotes = Math.floor(chord.duration * notesPerBeat);
     const noteDuration = chord.duration / totalArpNotes;
 
@@ -534,6 +664,12 @@ export function generateArpeggio(
           noteIndex = pos < chordNotes.length ? pos : cycle - pos;
           break;
         }
+        case 'broken': {
+          // Broken arpeggio: skip one note each time for a more musical pattern
+          const skipPattern = [0, 2, 1, 3, 0, 2, 1, 3];
+          noteIndex = skipPattern[i % skipPattern.length] % chordNotes.length;
+          break;
+        }
         case 'random': noteIndex = Math.floor(Math.random() * chordNotes.length); break;
       }
 
@@ -546,20 +682,23 @@ export function generateArpeggio(
     }
   }
 
-  return applyDynamics(notes, params.dynamics);
+  let result = applyDynamics(notes, params.dynamics);
+  result = applyTensionDynamics(result, tension);
+  return result;
 }
 
 export function generateDrumPattern(
   params: CompositionParams,
+  tension?: TensionCurve,
 ): Note[] {
   if (params.style === 'jazz' || params.style === 'neo_soul') {
-    return generateJazzDrums(params);
+    return generateJazzDrums(params, tension);
   }
   if (params.style === 'bossa_nova') {
     return generateBossaDrums(params);
   }
   if (params.style === 'lo_fi') {
-    return generateLoFiDrums(params);
+    return generateLoFiDrums(params, tension);
   }
 
   const notes: Note[] = [];
@@ -570,11 +709,14 @@ export function generateDrumPattern(
   const HIHAT_OPEN = 46;
   const RIDE = 51;
   const CRASH = 49;
+  const RIM = 37;
 
   for (let beat = 0; beat < totalBeats; beat += 0.5) {
     const isDownbeat = beat % params.timeSignature[0] === 0;
     const isBackbeat = beat % 2 === 1;
     const isEighth = beat % 1 === 0.5;
+
+    const tensionVal = tension ? tensionAtBeat(tension, beat) : 0.5;
 
     if (isDownbeat) {
       notes.push({ pitch: KICK, velocity: 100, duration: 0.25, startBeat: beat });
@@ -587,7 +729,8 @@ export function generateDrumPattern(
       notes.push({ pitch: SNARE, velocity: 85 + Math.floor(Math.random() * 15), duration: 0.25, startBeat: beat });
     }
 
-    if (beat % 2 === 0 && !isDownbeat && params.rhythmicVariety >= 5 && Math.random() > 0.6) {
+    // Ghost kicks — more frequent at high tension
+    if (beat % 2 === 0 && !isDownbeat && params.rhythmicVariety >= 5 && Math.random() > (0.7 - tensionVal * 0.2)) {
       notes.push({ pitch: KICK, velocity: 70, duration: 0.25, startBeat: beat });
     }
 
@@ -613,12 +756,20 @@ export function generateDrumPattern(
     if (params.style === 'gospel' && isBackbeat && params.rhythmicVariety >= 5 && Math.random() > 0.7) {
       notes.push({ pitch: RIDE, velocity: 50, duration: 0.3, startBeat: beat + 0.5 });
     }
+
+    // Drum fill at high-tension phrase boundaries
+    if (tension && isCadenceRegion(tension, beat, 1) && Math.random() > 0.7 && params.rhythmicVariety >= 4) {
+      notes.push({ pitch: SNARE, velocity: 60 + Math.floor(tensionVal * 30), duration: 0.15, startBeat: beat });
+      if (Math.random() > 0.5) {
+        notes.push({ pitch: RIM, velocity: 55, duration: 0.1, startBeat: beat + 0.25 });
+      }
+    }
   }
 
   return notes;
 }
 
-function generateJazzDrums(params: CompositionParams): Note[] {
+function generateJazzDrums(params: CompositionParams, tension?: TensionCurve): Note[] {
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
   const KICK = 36;
@@ -626,11 +777,13 @@ function generateJazzDrums(params: CompositionParams): Note[] {
   const RIDE = 51;
   const HIHAT_CLOSED = 42;
   const CRASH = 49;
+  const RIM = 37;
 
   for (let beat = 0; beat < totalBeats; beat += 0.5) {
-    const isDownbeat = beat % params.timeSignature[0] === 0;
     const beatInBar = beat % params.timeSignature[0];
+    const tensionVal = tension ? tensionAtBeat(tension, beat) : 0.5;
 
+    // Ride cymbal — spang-a-lang pattern
     if (beat % 1 === 0) {
       notes.push({ pitch: RIDE, velocity: 60 + Math.floor(Math.random() * 20), duration: 0.4, startBeat: beat });
     }
@@ -639,20 +792,26 @@ function generateJazzDrums(params: CompositionParams): Note[] {
       notes.push({ pitch: RIDE, velocity: 35 + Math.floor(Math.random() * 15), duration: 0.25, startBeat: beat });
     }
 
+    // Comping: feathered kick on 1 and 3, tension-aware accent
+    if (beatInBar === 0 || beatInBar === 2) {
+      const accentChance = beatInBar === 0 ? (0.7 - tensionVal * 0.2) : (0.9 - tensionVal * 0.15);
+      const accented = Math.random() > accentChance;
+      const vel = accented ? 65 + Math.floor(Math.random() * 20) : 45 + Math.floor(Math.random() * 15);
+      notes.push({ pitch: KICK, velocity: vel, duration: 0.2, startBeat: beat });
+    }
+
+    // Hi-hat on 2 and 4
     if (beatInBar === 1 || beatInBar === 3) {
       notes.push({ pitch: HIHAT_CLOSED, velocity: 40 + Math.floor(Math.random() * 15), duration: 0.1, startBeat: beat });
     }
 
-    if (isDownbeat && Math.random() > 0.6) {
-      notes.push({ pitch: KICK, velocity: 65 + Math.floor(Math.random() * 20), duration: 0.25, startBeat: beat });
-    }
-
-    if (!isDownbeat && Math.random() > 0.88) {
-      notes.push({ pitch: KICK, velocity: 50 + Math.floor(Math.random() * 20), duration: 0.2, startBeat: beat });
-    }
-
+    // Cross-stick at low tension, snare hits at high tension
     if (Math.random() > 0.92 && params.rhythmicVariety >= 5) {
-      notes.push({ pitch: SNARE, velocity: 40 + Math.floor(Math.random() * 25), duration: 0.15, startBeat: beat });
+      if (tensionVal > 0.5) {
+        notes.push({ pitch: SNARE, velocity: 40 + Math.floor(Math.random() * 25), duration: 0.15, startBeat: beat });
+      } else {
+        notes.push({ pitch: RIM, velocity: 35 + Math.floor(Math.random() * 15), duration: 0.1, startBeat: beat });
+      }
     }
 
     if (beat === 0 && Math.random() > 0.75) {
@@ -669,18 +828,21 @@ function generateBossaDrums(params: CompositionParams): Note[] {
   const SNARE = 38;
   const HIHAT_CLOSED = 42;
   const RIDE = 51;
+  const RIM = 37;
 
   for (let measure = 0; measure < params.measures; measure++) {
     const base = measure * params.timeSignature[0];
 
+    // Partido alto bass drum pattern
     notes.push({ pitch: KICK, velocity: 80, duration: 0.3, startBeat: base });
     notes.push({ pitch: KICK, velocity: 65, duration: 0.25, startBeat: base + 1.5 });
     notes.push({ pitch: KICK, velocity: 70, duration: 0.3, startBeat: base + 3 });
 
-    notes.push({ pitch: SNARE, velocity: 45, duration: 0.15, startBeat: base + 0.5 });
-    notes.push({ pitch: SNARE, velocity: 55, duration: 0.2, startBeat: base + 1 });
-    notes.push({ pitch: SNARE, velocity: 45, duration: 0.15, startBeat: base + 2.5 });
-    notes.push({ pitch: SNARE, velocity: 55, duration: 0.2, startBeat: base + 3 });
+    // Cross-stick (rim click) pattern — authentic bossa
+    notes.push({ pitch: RIM, velocity: 45, duration: 0.1, startBeat: base + 0.5 });
+    notes.push({ pitch: RIM, velocity: 50, duration: 0.1, startBeat: base + 1 });
+    notes.push({ pitch: SNARE, velocity: 55, duration: 0.2, startBeat: base + 2.5 });
+    notes.push({ pitch: RIM, velocity: 50, duration: 0.1, startBeat: base + 3 });
 
     for (let eighth = 0; eighth < params.timeSignature[0] * 2; eighth++) {
       const beat = base + eighth * 0.5;
@@ -698,7 +860,7 @@ function generateBossaDrums(params: CompositionParams): Note[] {
   return notes;
 }
 
-function generateLoFiDrums(params: CompositionParams): Note[] {
+function generateLoFiDrums(params: CompositionParams, tension?: TensionCurve): Note[] {
   const notes: Note[] = [];
   const totalBeats = params.measures * params.timeSignature[0];
   const KICK = 36;
@@ -708,6 +870,7 @@ function generateLoFiDrums(params: CompositionParams): Note[] {
 
   for (let beat = 0; beat < totalBeats; beat += 0.5) {
     const barBeat = beat % params.timeSignature[0];
+    const tensionVal = tension ? tensionAtBeat(tension, beat) : 0.5;
 
     if (barBeat === 0) {
       notes.push({ pitch: KICK, velocity: 90, duration: 0.3, startBeat: beat });
@@ -733,58 +896,11 @@ function generateLoFiDrums(params: CompositionParams): Note[] {
       });
     }
 
-    if (Math.random() > 0.93 && params.rhythmicVariety >= 5) {
+    // Ghost snare — more at high tension
+    if (Math.random() > (0.93 - tensionVal * 0.08) && params.rhythmicVariety >= 5) {
       notes.push({ pitch: SNARE, velocity: 30 + Math.floor(Math.random() * 15), duration: 0.1, startBeat: beat });
     }
   }
 
   return notes;
-}
-
-// ---------------------------------------------------------------------------
-// Drum fills at section boundaries
-// ---------------------------------------------------------------------------
-
-export function addDrumFills(
-  drumNotes: Note[],
-  sections: Section[],
-  beatsPerMeasure: number,
-): Note[] {
-  const SNARE = 38;
-  const KICK = 36;
-  const HIHAT_OPEN = 46;
-  const fills: Note[] = [];
-
-  for (const section of sections) {
-    if (section.startMeasure === 0) continue;
-    const fillStart = section.startMeasure * beatsPerMeasure - 1;
-    if (fillStart < 0) continue;
-
-    const fillType = Math.random();
-
-    if (fillType < 0.4) {
-      // Snare roll fill
-      for (let i = 0; i < 4; i++) {
-        fills.push({
-          pitch: SNARE,
-          velocity: 70 + i * 12,
-          duration: 0.12,
-          startBeat: fillStart + i * 0.25,
-        });
-      }
-    } else if (fillType < 0.7) {
-      // Kick-snare alternating fill
-      fills.push({ pitch: KICK, velocity: 85, duration: 0.15, startBeat: fillStart });
-      fills.push({ pitch: SNARE, velocity: 80, duration: 0.12, startBeat: fillStart + 0.25 });
-      fills.push({ pitch: KICK, velocity: 75, duration: 0.15, startBeat: fillStart + 0.5 });
-      fills.push({ pitch: SNARE, velocity: 90, duration: 0.15, startBeat: fillStart + 0.75 });
-    } else {
-      // Crash + snare hit
-      fills.push({ pitch: SNARE, velocity: 95, duration: 0.2, startBeat: fillStart + 0.5 });
-      fills.push({ pitch: HIHAT_OPEN, velocity: 80, duration: 0.4, startBeat: fillStart + 0.5 });
-      fills.push({ pitch: KICK, velocity: 100, duration: 0.25, startBeat: fillStart + 0.75 });
-    }
-  }
-
-  return [...drumNotes, ...fills];
 }
