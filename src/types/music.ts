@@ -85,7 +85,8 @@ export type InstrumentType =
   | 'vibraphone' | 'clavinet' | 'tape_keys'
   | 'wurlitzer' | 'muted_trumpet' | 'marimba'
   | 'analog_pad' | 'celeste' | 'harpsichord'
-  | 'fretless_bass' | 'finger_bass';
+  | 'fretless_bass' | 'finger_bass'
+  | 'sub_bass' | 'warm_pad';
 
 export interface TrackEffect {
   type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher' | 'auto_wah' | 'ping_pong_delay';
@@ -99,6 +100,8 @@ export interface Composition {
   params: CompositionParams;
   tracks: Track[];
   chordProgression: Chord[];
+  sections: Section[];
+  tensionCurve: TensionCurve;
   createdAt: number;
 }
 
@@ -115,3 +118,30 @@ export interface CompositionPreset {
   description: string;
   params: Partial<CompositionParams>;
 }
+
+// ---------------------------------------------------------------------------
+// Section / Arrangement intelligence
+// ---------------------------------------------------------------------------
+
+export type SectionKind = 'intro' | 'verse' | 'build' | 'climax' | 'breakdown' | 'outro';
+
+export interface Section {
+  kind: SectionKind;
+  startMeasure: number;
+  lengthMeasures: number;
+  /** Per-track presence: 0 = silent, 0.5 = sparse/textural, 1 = full */
+  trackPresence: Record<string, number>;
+  /** 0-1 tension level for this section */
+  tension: number;
+}
+
+// ---------------------------------------------------------------------------
+// Tension / Release arc
+// ---------------------------------------------------------------------------
+
+export interface TensionPoint {
+  beat: number;
+  tension: number;  // 0-1
+}
+
+export type TensionCurve = TensionPoint[];

@@ -1,5 +1,7 @@
-import type { Note, Chord, CompositionParams } from '../types/music';
+import type { Note, Chord, CompositionParams, Section, TensionCurve } from '../types/music';
 import { getScaleNotesMultiOctave, nearestScaleNote } from './scales';
+import { getTensionAtBeat, tensionToVelocityMod, tensionToRegisterShift, tensionToDensityScale } from './tension';
+import { getTrackPresenceAtBeat } from './sections';
 
 function weightedRandom(weights: number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
@@ -159,15 +161,18 @@ export function generateMelody(
   params: CompositionParams,
   chords: Chord[],
   octaveRange: [number, number] = [4, 6],
+  sections?: Section[],
+  tensionCurve?: TensionCurve,
 ): Note[] {
   const scaleNotes = getScaleNotesMultiOctave(params.key, params.scale, octaveRange[0], octaveRange[1]);
   const totalBeats = params.measures * params.timeSignature[0];
   const density = params.melodicDensity / 10;
+  const beatsPerBar = params.timeSignature[0];
 
   const useMotif = params.expressiveness >= 5;
 
   if (useMotif) {
-    return generateMotifMelody(params, chords, scaleNotes, totalBeats);
+    return generateMotifMelody(params, chords, scaleNotes, totalBeats, sections, tensionCurve);
   }
 
   const contour = generateContour(totalBeats, density);
@@ -181,7 +186,17 @@ export function generateMelody(
     const duration = rhythmPattern[i];
     const contourPoint = contour[Math.min(i, contour.length - 1)];
 
-    let targetPitch = centerPitch + contourPoint.target;
+    const tension = tensionCurve ? getTensionAtBeat(tensionCurve, currentBeat) : 0.5;
+    const presence = sections ? getTrackPresenceAtBeat(sections, 'Melody', currentBeat, beatsPerBar) : 1;
+
+    if (presence <= 0) {
+      currentBeat += duration;
+      continue;
+    }
+
+    const registerShift = tensionCurve ? tensionToRegisterShift(tension) : 0;
+
+    let targetPitch = centerPitch + contourPoint.target + registerShift;
     targetPitch = nearestScaleNote(targetPitch, params.key, params.scale);
 
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
@@ -239,17 +254,23 @@ export function generateMelody(
       continue;
     }
 
-    const phrasePos = (currentBeat % 8) / 8;
-    const isRest = phrasePos > 0.85 && Math.random() > 0.5 && params.melodicDensity < 8
-      || Math.random() > 0.88 && params.melodicDensity < 7;
+    const phrasePosFrac = (currentBeat % 8) / 8;
+    const isRest = phrasePosFrac > 0.85 && Math.random() > 0.5 && params.melodicDensity < 8
+      || Math.random() > (0.85 - (1 - presence) * 0.3) && params.melodicDensity < 7;
 
-    if (!isRest) {
+    // Phrase breathing: insert rests near phrase boundaries (every 4 bars)
+    const phrasePos = currentBeat % (beatsPerBar * 4);
+    const nearPhraseEnd = phrasePos > beatsPerBar * 3.5;
+    const breathRest = nearPhraseEnd && Math.random() > 0.5;
+
+    if (!isRest && !breathRest) {
+      const velMod = tensionCurve ? tensionToVelocityMod(tension) : 1;
       const baseVelocity = 60 + Math.floor(params.expressiveness * 5);
       const accentVariation = Math.floor(Math.random() * 30 * (params.expressiveness / 10));
 
       notes.push({
         pitch: targetPitch,
-        velocity: Math.min(127, baseVelocity + accentVariation),
+        velocity: Math.min(127, Math.round((baseVelocity + accentVariation) * velMod)),
         duration: duration * (0.8 + Math.random() * 0.15),
         startBeat: currentBeat,
       });
@@ -268,9 +289,12 @@ function generateMotifMelody(
   chords: Chord[],
   scaleNotes: number[],
   totalBeats: number,
+  sections?: Section[],
+  tensionCurve?: TensionCurve,
 ): Note[] {
   const notes: Note[] = [];
   const centerIdx = Math.floor(scaleNotes.length / 2);
+  const beatsPerBar = params.timeSignature[0];
   const motif = generateMotif(scaleNotes, params.melodicDensity);
   const techniques: Array<'repeat' | 'sequence' | 'inversion' | 'augment' | 'diminution' | 'retrograde'> =
     ['repeat', 'sequence', 'inversion', 'augment', 'diminution', 'retrograde'];
@@ -279,8 +303,17 @@ function generateMotifMelody(
   let phraseCount = 0;
 
   while (currentBeat < totalBeats) {
+    const presence = sections ? getTrackPresenceAtBeat(sections, 'Melody', currentBeat, beatsPerBar) : 1;
+    if (presence <= 0) {
+      currentBeat += 1;
+      continue;
+    }
+
+    const tension = tensionCurve ? getTensionAtBeat(tensionCurve, currentBeat) : 0.5;
+    const registerShift = tensionCurve ? tensionToRegisterShift(tension) : 0;
+
     const technique = phraseCount === 0 ? 'repeat' : techniques[Math.floor(Math.random() * techniques.length)];
-    const transposeSteps = Math.floor(Math.random() * 5) - 2;
+    const transposeSteps = Math.floor(Math.random() * 5) - 2 + Math.round(registerShift * 0.3);
     const developed = developMotif(motif, technique, transposeSteps);
 
     const activeChord = chords.find(c => c.startBeat <= currentBeat && c.startBeat + c.duration > currentBeat);
@@ -304,7 +337,7 @@ function generateMotifMelody(
     for (let i = 0; i < developed.intervals.length; i++) {
       if (currentBeat >= totalBeats) break;
 
-      let scaleIdx = centerIdx + developed.intervals[i];
+      let scaleIdx = centerIdx + developed.intervals[i] + Math.round(registerShift * 0.5);
       scaleIdx = Math.max(0, Math.min(scaleNotes.length - 1, scaleIdx));
       let pitch = scaleNotes[scaleIdx];
 
@@ -322,13 +355,15 @@ function generateMotifMelody(
         }
       }
 
-      const dur = Math.min(developed.durations[i], totalBeats - currentBeat);
+      const densityScale = tensionCurve ? tensionToDensityScale(tension) : 1;
+      const dur = Math.min(developed.durations[i] / densityScale, totalBeats - currentBeat);
+      const velMod = tensionCurve ? tensionToVelocityMod(tension) : 1;
       const baseVelocity = 60 + Math.floor(params.expressiveness * 5);
       const accent = i === 0 ? 10 : 0;
 
       notes.push({
         pitch,
-        velocity: Math.min(127, baseVelocity + accent + Math.floor(Math.random() * 15)),
+        velocity: Math.min(127, Math.round((baseVelocity + accent + Math.floor(Math.random() * 15)) * velMod)),
         duration: dur * (0.8 + Math.random() * 0.15),
         startBeat: currentBeat,
       });
@@ -336,7 +371,8 @@ function generateMotifMelody(
       currentBeat += dur;
     }
 
-    if (Math.random() > 0.6 && currentBeat < totalBeats) {
+    const restChance = tension < 0.4 ? 0.4 : 0.6;
+    if (Math.random() > restChance && currentBeat < totalBeats) {
       const restDur = Math.min(0.5 + Math.random() * 1.0, totalBeats - currentBeat);
       currentBeat += restDur;
     }
@@ -1026,4 +1062,52 @@ function generateLoFiDrums(params: CompositionParams): Note[] {
   }
 
   return notes;
+}
+
+// ---------------------------------------------------------------------------
+// Drum fills at section boundaries
+// ---------------------------------------------------------------------------
+
+export function addDrumFills(
+  drumNotes: Note[],
+  sections: Section[],
+  beatsPerMeasure: number,
+): Note[] {
+  const SNARE = 38;
+  const KICK = 36;
+  const HIHAT_OPEN = 46;
+  const fills: Note[] = [];
+
+  for (const section of sections) {
+    if (section.startMeasure === 0) continue;
+    const fillStart = section.startMeasure * beatsPerMeasure - 1;
+    if (fillStart < 0) continue;
+
+    const fillType = Math.random();
+
+    if (fillType < 0.4) {
+      // Snare roll fill
+      for (let i = 0; i < 4; i++) {
+        fills.push({
+          pitch: SNARE,
+          velocity: 70 + i * 12,
+          duration: 0.12,
+          startBeat: fillStart + i * 0.25,
+        });
+      }
+    } else if (fillType < 0.7) {
+      // Kick-snare alternating fill
+      fills.push({ pitch: KICK, velocity: 85, duration: 0.15, startBeat: fillStart });
+      fills.push({ pitch: SNARE, velocity: 80, duration: 0.12, startBeat: fillStart + 0.25 });
+      fills.push({ pitch: KICK, velocity: 75, duration: 0.15, startBeat: fillStart + 0.5 });
+      fills.push({ pitch: SNARE, velocity: 90, duration: 0.15, startBeat: fillStart + 0.75 });
+    } else {
+      // Crash + snare hit
+      fills.push({ pitch: SNARE, velocity: 95, duration: 0.2, startBeat: fillStart + 0.5 });
+      fills.push({ pitch: HIHAT_OPEN, velocity: 80, duration: 0.4, startBeat: fillStart + 0.5 });
+      fills.push({ pitch: KICK, velocity: 100, duration: 0.25, startBeat: fillStart + 0.75 });
+    }
+  }
+
+  return [...drumNotes, ...fills];
 }
