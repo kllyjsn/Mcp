@@ -89,16 +89,18 @@ export function generateTensionCurve(
     let harmonicTension = 0;
     if (activeChord) {
       const q = activeChord.quality;
-      if (q === 'dominant7' || q === 'augmented7')          harmonicTension = 0.8;
-      else if (q === 'diminished' || q === 'diminished7')   harmonicTension = 0.9;
-      else if (q === 'half_diminished7')                    harmonicTension = 0.85;
-      else if (q === 'augmented')                           harmonicTension = 0.7;
-      else if (q === 'minor7' || q === 'minor9')            harmonicTension = 0.35;
-      else if (q === 'sus4' || q === 'sus2')                harmonicTension = 0.5;
-      else if (q === 'major7' || q === 'major9')            harmonicTension = 0.15;
-      else if (q === 'add9')                                harmonicTension = 0.2;
-      else if (q === 'minor')                               harmonicTension = 0.3;
-      else                                                  harmonicTension = 0.1;
+      if (q === 'dominant7' || q === 'augmented7')                    harmonicTension = 0.8;
+      else if (q === 'dominant9' || q === 'dominant13')              harmonicTension = 0.8;
+      else if (q === 'diminished' || q === 'diminished7')            harmonicTension = 0.9;
+      else if (q === 'half_diminished7')                             harmonicTension = 0.85;
+      else if (q === 'augmented')                                    harmonicTension = 0.7;
+      else if (q === 'minor7' || q === 'minor9' || q === 'minor11') harmonicTension = 0.35;
+      else if (q === 'sus4' || q === 'sus2')                        harmonicTension = 0.5;
+      else if (q === 'minor6')                                      harmonicTension = 0.3;
+      else if (q === 'major7' || q === 'major9')                    harmonicTension = 0.15;
+      else if (q === 'add9' || q === 'major6')                      harmonicTension = 0.2;
+      else if (q === 'minor')                                       harmonicTension = 0.3;
+      else                                                          harmonicTension = 0.1;
     }
 
     const combined = macro * 0.35 + phraseArc * 0.35 + harmonicTension * 0.3;
