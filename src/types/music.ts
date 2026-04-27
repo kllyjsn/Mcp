@@ -76,12 +76,26 @@ export type InstrumentType =
   | 'bells' | 'brass' | 'woodwind' | 'drums'
   | 'harp' | 'organ' | 'choir' | 'synth_lead'
   | 'electric_piano' | 'upright_bass' | 'nylon_guitar'
-  | 'vibraphone' | 'clavinet' | 'tape_keys';
+  | 'vibraphone' | 'clavinet' | 'tape_keys'
+  | 'flute' | 'cello' | 'warm_pad' | 'analog_bass'
+  | 'brass_ensemble' | 'marimba';
 
 export interface TrackEffect {
   type: 'reverb' | 'delay' | 'chorus' | 'filter' | 'compressor' | 'eq' | 'distortion' | 'phaser' | 'tremolo' | 'bitcrusher';
   wet: number;
   params: Record<string, number>;
+}
+
+export type FormType = 'aaba' | 'verse_chorus' | 'aba' | 'through' | 'rondo';
+
+export interface Section {
+  label: string;
+  startMeasure: number;
+  measures: number;
+  energy: number;
+  densityMod: number;
+  complexityMod: number;
+  activeVoices: Record<string, boolean>;
 }
 
 export interface Composition {
@@ -90,6 +104,7 @@ export interface Composition {
   params: CompositionParams;
   tracks: Track[];
   chordProgression: Chord[];
+  sections: Section[];
   createdAt: number;
 }
 

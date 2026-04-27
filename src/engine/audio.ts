@@ -9,9 +9,10 @@ const channels: Map<string, Tone.Channel> = new Map();
 const effects: Map<string, Tone.ToneAudioNode[]> = new Map();
 const drumSynthInstances: (Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth)[] = [];
 
-const masterReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).toDestination();
-const masterCompressor = new Tone.Compressor({ threshold: -12, ratio: 3 }).connect(masterReverb);
-const masterLimiter = new Tone.Limiter(-1).connect(masterCompressor);
+const masterEQ = new Tone.EQ3({ low: 1, mid: 0, high: -1 }).toDestination();
+const masterReverb = new Tone.Reverb({ decay: 2.8, wet: 0.12 }).connect(masterEQ);
+const masterCompressor = new Tone.Compressor({ threshold: -14, ratio: 3.5, attack: 0.01, release: 0.15 }).connect(masterReverb);
+const masterLimiter = new Tone.Limiter(-0.5).connect(masterCompressor);
 
 type InstrumentKey = string;
 
@@ -23,18 +24,18 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   piano: {
     create: () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle8' },
-      envelope: { attack: 0.008, decay: 0.4, sustain: 0.25, release: 1.2 },
+      envelope: { attack: 0.005, decay: 0.5, sustain: 0.2, release: 1.4 },
       volume: -6,
     }),
   },
   electric_piano: {
     create: () => new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3.01,
-      modulationIndex: 1.5,
+      harmonicity: 3.5,
+      modulationIndex: 1.8,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.005, decay: 0.6, sustain: 0.2, release: 1.8 },
+      envelope: { attack: 0.003, decay: 0.7, sustain: 0.15, release: 2.2 },
       modulation: { type: 'square' },
-      modulationEnvelope: { attack: 0.002, decay: 0.3, sustain: 0, release: 0.5 },
+      modulationEnvelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.6 },
       volume: -8,
     }),
   },
@@ -51,9 +52,55 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   strings: {
     create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatsawtooth', spread: 20, count: 3 },
-      envelope: { attack: 0.5, decay: 0.4, sustain: 0.8, release: 2.5 },
+      oscillator: { type: 'fatsawtooth', spread: 25, count: 4 },
+      envelope: { attack: 0.6, decay: 0.5, sustain: 0.8, release: 3 },
       volume: -12,
+    }),
+  },
+  cello: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 15, count: 3 },
+      envelope: { attack: 0.4, decay: 0.6, sustain: 0.75, release: 2.5 },
+      volume: -10,
+    }),
+  },
+  flute: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine4' },
+      envelope: { attack: 0.08, decay: 0.3, sustain: 0.5, release: 1.2 },
+      volume: -10,
+    }),
+  },
+  warm_pad: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsine4', spread: 30, count: 4 },
+      envelope: { attack: 1.0, decay: 0.8, sustain: 0.7, release: 4 },
+      volume: -14,
+    }),
+  },
+  brass_ensemble: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsquare4', spread: 12, count: 3 },
+      envelope: { attack: 0.1, decay: 0.3, sustain: 0.7, release: 0.5 },
+      volume: -10,
+    }),
+  },
+  marimba: {
+    create: () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 4,
+      modulationIndex: 0.6,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.6, sustain: 0, release: 1.5 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.8 },
+      volume: -10,
+    }),
+  },
+  analog_bass: {
+    create: () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', spread: 8, count: 2 },
+      envelope: { attack: 0.008, decay: 0.3, sustain: 0.4, release: 0.35 },
+      volume: -6,
     }),
   },
   vibraphone: {
@@ -101,8 +148,8 @@ const INSTRUMENT_DEFS: Record<InstrumentKey, InstrumentDef> = {
   },
   pads: {
     create: () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine4' },
-      envelope: { attack: 0.6, decay: 0.5, sustain: 0.7, release: 3 },
+      oscillator: { type: 'fatsine4', spread: 18, count: 3 },
+      envelope: { attack: 0.8, decay: 0.6, sustain: 0.7, release: 3.5 },
       volume: -12,
     }),
   },
