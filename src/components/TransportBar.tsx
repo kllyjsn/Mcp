@@ -71,7 +71,8 @@ export function TransportBar() {
           type="number"
           value={params.tempo}
           onChange={e => setTempo(Math.max(40, Math.min(240, +e.target.value)))}
-          className="w-14 bg-zinc-800/60 border border-zinc-700/50 rounded-md px-2 py-1 text-sm text-zinc-200 text-center font-mono focus:outline-none focus:border-amber-600/50"
+          disabled={isExporting}
+          className="w-14 bg-zinc-800/60 border border-zinc-700/50 rounded-md px-2 py-1 text-sm text-zinc-200 text-center font-mono focus:outline-none focus:border-amber-600/50 disabled:opacity-30"
         />
       </div>
 
