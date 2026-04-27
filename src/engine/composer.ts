@@ -200,7 +200,7 @@ export function compose(params: CompositionParams): Composition {
 
   const rawCounter = generateCounterMelody(params, chords, rawMelody);
   const articulatedCounter = applyArticulations(rawCounter, params.style, params.key, params.scale, params.expressiveness * 0.7);
-  let counterNotes = humanizeTrack(articulatedCounter, params.style, 'Melody', beatsPerBar);
+  let counterNotes = humanizeTrack(articulatedCounter, params.style, 'Counter', beatsPerBar);
   counterNotes = applySectionEnergy(counterNotes, sections, beatsPerBar);
   counterNotes = muteInactiveSections(counterNotes, 'counter', sections, beatsPerBar);
 
@@ -269,8 +269,8 @@ export function recomposeTrack(
     case 'Arpeggio': newNotes = generateArpeggio(params, chordProgression); break;
     case 'Drums': newNotes = generateDrumPattern(params); break;
     case 'Counter': {
-      const rawMelody = generateMelody(params, chordProgression, [4, 6]);
-      const raw = generateCounterMelody(params, chordProgression, rawMelody);
+      const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
+      const raw = generateCounterMelody(params, chordProgression, melodyTrack?.notes ?? []);
       newNotes = applyArticulations(raw, params.style, params.key, params.scale, params.expressiveness * 0.7);
       break;
     }
