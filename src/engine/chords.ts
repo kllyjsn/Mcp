@@ -137,7 +137,8 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
 ];
 
 function secondaryDominantRoot(targetDegree: number, scaleIntervals: number[], keyIndex: number): { root: NoteName; quality: ChordQuality; roman: string } {
-  const targetInterval = targetDegree < scaleIntervals.length ? scaleIntervals[targetDegree] : 0;
+  const majorFallback = SCALE_INTERVALS['major'];
+  const targetInterval = targetDegree < scaleIntervals.length ? scaleIntervals[targetDegree] : majorFallback[targetDegree] ?? 0;
   const domInterval = (targetInterval + 7) % 12;
   const root = NOTE_NAMES[(keyIndex + domInterval) % 12];
   return { root, quality: 'dominant7', roman: `V7/${ROMAN_NUMERALS[targetDegree]}` };
