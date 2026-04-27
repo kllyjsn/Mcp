@@ -83,7 +83,7 @@ export function ArrangementView() {
       )}
 
       {/* Chord progression header */}
-      <div className="sticky top-[29px] z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm">
+      <div className={`sticky ${composition.sections.length > 0 ? 'top-[29px]' : 'top-0'} z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm`}>
         <div className="w-44 shrink-0 px-3 py-2 border-r border-zinc-800/50">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Chords</span>
         </div>
