@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useStore } from '../stores/useStore';
 import type { NoteName, ScaleType, CompositionStyle, DynamicCurve } from '../types/music';
 import { NOTE_NAMES } from '../engine/scales';
-import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church } from 'lucide-react';
+import { COMPOSITION_PRESETS, applyPreset } from '../engine/presets';
+import { Music, Waves, Zap, Heart, Sparkles, Coffee, Disc3, Church, Moon, Drum, MicVocal, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SCALES: { value: ScaleType; label: string }[] = [
   { value: 'major', label: 'Major (Ionian)' },
@@ -26,9 +28,12 @@ const STYLES: { value: CompositionStyle; label: string; icon: typeof Music }[] =
   { value: 'impressionist', label: 'Impressionist', icon: Waves },
   { value: 'jazz', label: 'Jazz', icon: Sparkles },
   { value: 'neo_soul', label: 'Neo Soul', icon: Sparkles },
+  { value: 'late_night', label: 'Late Night', icon: Moon },
   { value: 'bossa_nova', label: 'Bossa Nova', icon: Disc3 },
   { value: 'lo_fi', label: 'Lo-Fi', icon: Coffee },
   { value: 'gospel', label: 'Gospel', icon: Church },
+  { value: 'afrobeat', label: 'Afrobeat', icon: Drum },
+  { value: 'contemporary_rnb', label: 'R&B', icon: MicVocal },
   { value: 'ambient', label: 'Ambient', icon: Waves },
   { value: 'minimalist', label: 'Minimalist', icon: Zap },
   { value: 'cinematic', label: 'Cinematic', icon: Music },
@@ -42,6 +47,14 @@ const DYNAMICS: { value: DynamicCurve; label: string }[] = [
   { value: 'terraced', label: 'Terraced' },
   { value: 'flat', label: 'Flat' },
   { value: 'dramatic', label: 'Dramatic' },
+];
+
+const TIME_SIGNATURES: { value: [number, number]; label: string }[] = [
+  { value: [4, 4], label: '4/4' },
+  { value: [3, 4], label: '3/4' },
+  { value: [6, 8], label: '6/8' },
+  { value: [5, 4], label: '5/4' },
+  { value: [7, 8], label: '7/8' },
 ];
 
 function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
@@ -73,11 +86,48 @@ function SliderParam({ label, value, onChange, min = 1, max = 10 }: {
 }
 
 export function CompositionPanel() {
-  const { params, setParam } = useStore();
+  const { params, setParam, setParams } = useStore();
+  const [presetsOpen, setPresetsOpen] = useState(false);
+
+  const handlePreset = (presetName: string) => {
+    const preset = COMPOSITION_PRESETS.find(p => p.name === presetName);
+    if (preset) {
+      setParams(applyPreset(preset, params));
+      setPresetsOpen(false);
+    }
+  };
 
   return (
     <div className="w-72 bg-zinc-900/60 border-r border-zinc-800/50 overflow-y-auto custom-scrollbar">
       <div className="p-4 space-y-5">
+
+        {/* Presets */}
+        <div>
+          <button
+            onClick={() => setPresetsOpen(!presetsOpen)}
+            className="w-full flex items-center justify-between text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-2 hover:text-amber-500 transition-colors"
+          >
+            <span className="flex items-center gap-2"><BookOpen size={12} /> Presets</span>
+            {presetsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          {presetsOpen && (
+            <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+              {COMPOSITION_PRESETS.map(p => (
+                <button
+                  key={p.name}
+                  onClick={() => handlePreset(p.name)}
+                  className="w-full text-left px-3 py-2 rounded-lg bg-zinc-800/40 hover:bg-amber-600/10 border border-zinc-700/30 hover:border-amber-600/20 transition-all"
+                >
+                  <div className="text-xs text-zinc-200 font-medium">{p.name}</div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5 line-clamp-1">{p.description}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-zinc-800/50" />
+
         <div>
           <h3 className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3 flex items-center gap-2">
             <Music size={12} /> Tonality
@@ -119,6 +169,24 @@ export function CompositionPanel() {
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
+          </div>
+          <div className="mt-2">
+            <label className="text-[11px] text-zinc-400 uppercase tracking-wider font-medium mb-1 block">Time Signature</label>
+            <div className="grid grid-cols-5 gap-1">
+              {TIME_SIGNATURES.map(ts => (
+                <button
+                  key={ts.label}
+                  onClick={() => setParam('timeSignature', ts.value)}
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                    params.timeSignature[0] === ts.value[0] && params.timeSignature[1] === ts.value[1]
+                      ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
+                      : 'bg-zinc-800/40 text-zinc-400 border border-zinc-700/30 hover:bg-zinc-800/70 hover:text-zinc-300'
+                  }`}
+                >
+                  {ts.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

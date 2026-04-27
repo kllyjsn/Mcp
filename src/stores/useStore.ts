@@ -30,6 +30,7 @@ interface ComposerStore {
   activeView: 'arrange' | 'mixer' | 'piano_roll';
 
   setParam: <K extends keyof CompositionParams>(key: K, value: CompositionParams[K]) => void;
+  setParams: (params: CompositionParams) => void;
   generate: () => Promise<void>;
   regenerateTrack: (trackIndex: number) => void;
   togglePlay: () => Promise<void>;
@@ -77,6 +78,10 @@ export const useStore = create<ComposerStore>((set, get) => ({
     set(state => ({
       params: { ...state.params, [key]: value },
     }));
+  },
+
+  setParams: (params) => {
+    set({ params });
   },
 
   generate: async () => {

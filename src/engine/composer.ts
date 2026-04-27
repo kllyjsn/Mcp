@@ -3,7 +3,7 @@ import { generateChordProgression } from './chords';
 import { generateMelody, generateBassLine, generatePadVoicings, generateArpeggio, generateDrumPattern, addDrumFills } from './melody';
 import { humanizeTrack } from './humanize';
 import { generateSections } from './sections';
-import { generateTensionCurve, getTensionAtBeat } from './tension';
+import { generateTensionArc, generateTensionCurve, getTensionAtBeat } from './tension';
 import { generateCounterMelody } from './countermelody';
 
 const TRACK_COLORS: Record<string, string> = {
@@ -47,9 +47,9 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }, { type: 'chorus', wet: 0.15, params: { frequency: 1.2, depth: 0.5 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 4 } }],
     arpeggioFx: [{ type: 'delay', wet: 0.3, params: { delayTime: 0.375, feedback: 0.3 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
-    counterFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    counterFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -15, ratio: 3 } }],
-    melodyVol: 0.8, harmonyVol: 0.55, bassVol: 0.7, arpeggioVol: 0.35, counterVol: 0.4, drumsVol: 0.5,
+    melodyVol: 0.8, harmonyVol: 0.55, bassVol: 0.7, arpeggioVol: 0.35, counterVol: 0.45, drumsVol: 0.5,
   },
   romantic: {
     melody: 'piano', harmony: 'strings', bass: 'bass', arpeggio: 'bells', counter: 'strings',
@@ -57,9 +57,9 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'reverb', wet: 0.5, params: { decay: 5 } }, { type: 'chorus', wet: 0.25, params: { frequency: 1, depth: 0.7 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 3 } }],
     arpeggioFx: [{ type: 'delay', wet: 0.35, params: { delayTime: 0.5, feedback: 0.4 } }, { type: 'reverb', wet: 0.4, params: { decay: 4 } }],
-    counterFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3.5 } }, { type: 'chorus', wet: 0.1, params: { frequency: 0.8, depth: 0.3 } }],
+    counterFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }, { type: 'chorus', wet: 0.1, params: { frequency: 0.8, depth: 0.4 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -15, ratio: 3 } }],
-    melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.65, arpeggioVol: 0.3, counterVol: 0.38, drumsVol: 0.4,
+    melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.65, arpeggioVol: 0.3, counterVol: 0.5, drumsVol: 0.4,
   },
   impressionist: {
     melody: 'piano', harmony: 'pads', bass: 'bass', arpeggio: 'vibraphone', counter: 'vibraphone',
@@ -67,29 +67,29 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'reverb', wet: 0.55, params: { decay: 6 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 3 } }, { type: 'reverb', wet: 0.15, params: { decay: 2 } }],
     arpeggioFx: [{ type: 'reverb', wet: 0.5, params: { decay: 5 } }, { type: 'tremolo', wet: 0.2, params: { frequency: 3, depth: 0.3 } }],
-    counterFx: [{ type: 'reverb', wet: 0.5, params: { decay: 5 } }, { type: 'delay', wet: 0.2, params: { delayTime: 0.5, feedback: 0.3 } }],
+    counterFx: [{ type: 'reverb', wet: 0.5, params: { decay: 5 } }, { type: 'delay', wet: 0.2, params: { delayTime: 0.5, feedback: 0.25 } }],
     drumsFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
-    melodyVol: 0.75, harmonyVol: 0.5, bassVol: 0.6, arpeggioVol: 0.4, counterVol: 0.35, drumsVol: 0.35,
+    melodyVol: 0.75, harmonyVol: 0.5, bassVol: 0.6, arpeggioVol: 0.4, counterVol: 0.4, drumsVol: 0.35,
   },
   jazz: {
-    melody: 'electric_piano', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'nylon_guitar',
+    melody: 'electric_piano', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'muted_trumpet',
     melodyFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'chorus', wet: 0.1, params: { frequency: 0.8, depth: 0.3 } }],
     harmonyFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }, { type: 'tremolo', wet: 0.08, params: { frequency: 3.5, depth: 0.2 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 0, high: -4 } }],
     arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 2.5 } }, { type: 'tremolo', wet: 0.15, params: { frequency: 5, depth: 0.25 } }],
-    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'filter', wet: 1, params: { frequency: 3000 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2.5 } }, { type: 'reverb', wet: 0.12, params: { decay: 1.5 } }],
-    melodyVol: 0.78, harmonyVol: 0.5, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.35, drumsVol: 0.52,
+    melodyVol: 0.78, harmonyVol: 0.5, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.42, drumsVol: 0.52,
   },
   neo_soul: {
-    melody: 'electric_piano', harmony: 'electric_piano', bass: 'bass', arpeggio: 'vibraphone', counter: 'electric_piano',
+    melody: 'warm_rhodes', harmony: 'warm_rhodes', bass: 'fretless_bass', arpeggio: 'vibraphone', counter: 'wurlitzer',
     melodyFx: [{ type: 'phaser', wet: 0.15, params: { frequency: 0.3, octaves: 2, baseFrequency: 400 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
     harmonyFx: [{ type: 'chorus', wet: 0.2, params: { frequency: 1.2, depth: 0.5 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 4 } }, { type: 'filter', wet: 1, params: { frequency: 800 } }],
     arpeggioFx: [{ type: 'delay', wet: 0.25, params: { delayTime: 0.375, feedback: 0.3 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
     counterFx: [{ type: 'phaser', wet: 0.1, params: { frequency: 0.2, octaves: 2, baseFrequency: 350 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }],
-    melodyVol: 0.76, harmonyVol: 0.52, bassVol: 0.7, arpeggioVol: 0.32, counterVol: 0.35, drumsVol: 0.5,
+    melodyVol: 0.76, harmonyVol: 0.52, bassVol: 0.7, arpeggioVol: 0.32, counterVol: 0.38, drumsVol: 0.5,
   },
   ambient: {
     melody: 'pads', harmony: 'pads', bass: 'bass', arpeggio: 'bells', counter: 'pads',
@@ -97,19 +97,19 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'reverb', wet: 0.7, params: { decay: 10 } }, { type: 'chorus', wet: 0.3, params: { frequency: 0.3, depth: 0.8 } }],
     bassFx: [{ type: 'reverb', wet: 0.3, params: { decay: 4 } }, { type: 'filter', wet: 1, params: { frequency: 500 } }],
     arpeggioFx: [{ type: 'delay', wet: 0.5, params: { delayTime: 0.75, feedback: 0.55 } }, { type: 'reverb', wet: 0.6, params: { decay: 8 } }],
-    counterFx: [{ type: 'reverb', wet: 0.55, params: { decay: 7 } }, { type: 'delay', wet: 0.3, params: { delayTime: 0.75, feedback: 0.4 } }],
+    counterFx: [{ type: 'delay', wet: 0.5, params: { delayTime: 0.75, feedback: 0.5 } }, { type: 'reverb', wet: 0.6, params: { decay: 7 } }],
     drumsFx: [{ type: 'reverb', wet: 0.4, params: { decay: 5 } }],
-    melodyVol: 0.65, harmonyVol: 0.55, bassVol: 0.5, arpeggioVol: 0.4, counterVol: 0.3, drumsVol: 0.3,
+    melodyVol: 0.65, harmonyVol: 0.55, bassVol: 0.5, arpeggioVol: 0.4, counterVol: 0.35, drumsVol: 0.3,
   },
   minimalist: {
-    melody: 'piano', harmony: 'piano', bass: 'bass', arpeggio: 'bells', counter: 'piano',
+    melody: 'piano', harmony: 'piano', bass: 'bass', arpeggio: 'bells', counter: 'marimba',
     melodyFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }],
     harmonyFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 3 } }],
     arpeggioFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
-    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -15, ratio: 2 } }],
-    melodyVol: 0.75, harmonyVol: 0.5, bassVol: 0.6, arpeggioVol: 0.35, counterVol: 0.3, drumsVol: 0.35,
+    melodyVol: 0.75, harmonyVol: 0.5, bassVol: 0.6, arpeggioVol: 0.35, counterVol: 0.42, drumsVol: 0.35,
   },
   cinematic: {
     melody: 'strings', harmony: 'strings', bass: 'bass', arpeggio: 'piano', counter: 'piano',
@@ -117,9 +117,9 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'reverb', wet: 0.55, params: { decay: 6 } }, { type: 'chorus', wet: 0.2, params: { frequency: 0.5, depth: 0.6 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 4 } }, { type: 'eq', wet: 1, params: { low: 4, mid: -2, high: -6 } }],
     arpeggioFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }, { type: 'delay', wet: 0.2, params: { delayTime: 0.5, feedback: 0.3 } }],
-    counterFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4 } }],
+    counterFx: [{ type: 'reverb', wet: 0.4, params: { decay: 4.5 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -12, ratio: 4 } }, { type: 'reverb', wet: 0.2, params: { decay: 3 } }],
-    melodyVol: 0.82, harmonyVol: 0.65, bassVol: 0.7, arpeggioVol: 0.35, counterVol: 0.4, drumsVol: 0.55,
+    melodyVol: 0.82, harmonyVol: 0.65, bassVol: 0.7, arpeggioVol: 0.35, counterVol: 0.48, drumsVol: 0.55,
   },
   electronic: {
     melody: 'synth_lead', harmony: 'pads', bass: 'bass', arpeggio: 'bells', counter: 'synth_lead',
@@ -127,27 +127,27 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     harmonyFx: [{ type: 'chorus', wet: 0.3, params: { frequency: 2, depth: 0.7 } }, { type: 'reverb', wet: 0.35, params: { decay: 4 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -15, ratio: 5 } }, { type: 'distortion', wet: 0.1, params: { amount: 0.2 } }],
     arpeggioFx: [{ type: 'delay', wet: 0.4, params: { delayTime: 0.1875, feedback: 0.45 } }, { type: 'filter', wet: 1, params: { frequency: 3000 } }],
-    counterFx: [{ type: 'delay', wet: 0.3, params: { delayTime: 0.375, feedback: 0.35 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
+    counterFx: [{ type: 'delay', wet: 0.3, params: { delayTime: 0.333, feedback: 0.35 } }, { type: 'filter', wet: 1, params: { frequency: 4000 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -10, ratio: 5 } }],
-    melodyVol: 0.8, harmonyVol: 0.5, bassVol: 0.75, arpeggioVol: 0.4, counterVol: 0.3, drumsVol: 0.6,
+    melodyVol: 0.8, harmonyVol: 0.5, bassVol: 0.75, arpeggioVol: 0.4, counterVol: 0.35, drumsVol: 0.6,
   },
   bossa_nova: {
-    melody: 'nylon_guitar', harmony: 'electric_piano', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'nylon_guitar',
+    melody: 'nylon_guitar', harmony: 'warm_rhodes', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'fingerstyle_guitar',
     melodyFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'chorus', wet: 0.08, params: { frequency: 0.6, depth: 0.3 } }],
     harmonyFx: [{ type: 'tremolo', wet: 0.1, params: { frequency: 4, depth: 0.2 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 2, mid: 1, high: -3 } }],
     arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'tremolo', wet: 0.12, params: { frequency: 5, depth: 0.2 } }],
-    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }, { type: 'chorus', wet: 0.06, params: { frequency: 0.5, depth: 0.2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.2, params: { decay: 2 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 2.5 } }, { type: 'reverb', wet: 0.1, params: { decay: 1.5 } }],
-    melodyVol: 0.78, harmonyVol: 0.48, bassVol: 0.7, arpeggioVol: 0.28, counterVol: 0.32, drumsVol: 0.42,
+    melodyVol: 0.78, harmonyVol: 0.48, bassVol: 0.7, arpeggioVol: 0.28, counterVol: 0.35, drumsVol: 0.42,
   },
   lo_fi: {
-    melody: 'tape_keys', harmony: 'electric_piano', bass: 'bass', arpeggio: 'vibraphone', counter: 'tape_keys',
+    melody: 'tape_keys', harmony: 'warm_rhodes', bass: 'bass', arpeggio: 'vibraphone', counter: 'kalimba',
     melodyFx: [{ type: 'bitcrusher', wet: 0.12, params: { bits: 12 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'chorus', wet: 0.1, params: { frequency: 0.5, depth: 0.4 } }],
     harmonyFx: [{ type: 'filter', wet: 1, params: { frequency: 2500 } }, { type: 'reverb', wet: 0.35, params: { decay: 3.5 } }],
     bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -18, ratio: 4 } }, { type: 'filter', wet: 1, params: { frequency: 600 } }],
     arpeggioFx: [{ type: 'bitcrusher', wet: 0.08, params: { bits: 14 } }, { type: 'delay', wet: 0.3, params: { delayTime: 0.375, feedback: 0.35 } }, { type: 'reverb', wet: 0.35, params: { decay: 3.5 } }],
-    counterFx: [{ type: 'bitcrusher', wet: 0.08, params: { bits: 12 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    counterFx: [{ type: 'bitcrusher', wet: 0.06, params: { bits: 14 } }, { type: 'delay', wet: 0.3, params: { delayTime: 0.5, feedback: 0.3 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
     drumsFx: [{ type: 'bitcrusher', wet: 0.15, params: { bits: 10 } }, { type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3 } }],
     melodyVol: 0.72, harmonyVol: 0.48, bassVol: 0.68, arpeggioVol: 0.32, counterVol: 0.3, drumsVol: 0.45,
   },
@@ -159,7 +159,37 @@ const STYLE_VOICINGS: Record<CompositionStyle, StyleVoicing> = {
     arpeggioFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }],
     counterFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'tremolo', wet: 0.06, params: { frequency: 5, depth: 0.12 } }],
     drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }, { type: 'reverb', wet: 0.1, params: { decay: 2 } }],
-    melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.35, drumsVol: 0.55,
+    melodyVol: 0.82, harmonyVol: 0.6, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.42, drumsVol: 0.55,
+  },
+  late_night: {
+    melody: 'warm_rhodes', harmony: 'warm_rhodes', bass: 'upright_bass', arpeggio: 'vibraphone', counter: 'muted_trumpet',
+    melodyFx: [{ type: 'reverb', wet: 0.3, params: { decay: 3 } }, { type: 'chorus', wet: 0.08, params: { frequency: 0.6, depth: 0.3 } }, { type: 'saturator', wet: 0.08, params: { amount: 0.1 } }],
+    harmonyFx: [{ type: 'tremolo', wet: 0.06, params: { frequency: 3, depth: 0.15 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 3 } }, { type: 'eq', wet: 1, params: { low: 3, mid: 1, high: -5 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.35, params: { decay: 3 } }, { type: 'tremolo', wet: 0.1, params: { frequency: 4.5, depth: 0.2 } }],
+    counterFx: [{ type: 'reverb', wet: 0.25, params: { decay: 2.5 } }, { type: 'filter', wet: 1, params: { frequency: 2500 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -20, ratio: 2 } }, { type: 'reverb', wet: 0.15, params: { decay: 1.8 } }],
+    melodyVol: 0.72, harmonyVol: 0.45, bassVol: 0.68, arpeggioVol: 0.25, counterVol: 0.4, drumsVol: 0.38,
+  },
+  afrobeat: {
+    melody: 'organ', harmony: 'clavinet', bass: 'bass', arpeggio: 'marimba', counter: 'muted_trumpet',
+    melodyFx: [{ type: 'tremolo', wet: 0.1, params: { frequency: 5, depth: 0.2 } }, { type: 'reverb', wet: 0.15, params: { decay: 1.5 } }],
+    harmonyFx: [{ type: 'phaser', wet: 0.12, params: { frequency: 0.5, octaves: 2, baseFrequency: 500 } }, { type: 'reverb', wet: 0.1, params: { decay: 1.5 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 5 } }, { type: 'eq', wet: 1, params: { low: 4, mid: 0, high: -3 } }],
+    arpeggioFx: [{ type: 'reverb', wet: 0.15, params: { decay: 1.5 } }],
+    counterFx: [{ type: 'reverb', wet: 0.15, params: { decay: 1.5 } }, { type: 'filter', wet: 1, params: { frequency: 3500 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -12, ratio: 4 } }],
+    melodyVol: 0.78, harmonyVol: 0.55, bassVol: 0.8, arpeggioVol: 0.4, counterVol: 0.45, drumsVol: 0.65,
+  },
+  contemporary_rnb: {
+    melody: 'warm_rhodes', harmony: 'analog_pad', bass: 'fretless_bass', arpeggio: 'kalimba', counter: 'wurlitzer',
+    melodyFx: [{ type: 'chorus', wet: 0.12, params: { frequency: 0.8, depth: 0.4 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    harmonyFx: [{ type: 'filter', wet: 1, params: { frequency: 3000 } }, { type: 'reverb', wet: 0.4, params: { decay: 4 } }, { type: 'widener', wet: 0.15, params: { depth: 0.6 } }],
+    bassFx: [{ type: 'compressor', wet: 1, params: { threshold: -16, ratio: 4 } }, { type: 'saturator', wet: 0.1, params: { amount: 0.12 } }],
+    arpeggioFx: [{ type: 'delay', wet: 0.3, params: { delayTime: 0.333, feedback: 0.3 } }, { type: 'reverb', wet: 0.3, params: { decay: 3 } }],
+    counterFx: [{ type: 'phaser', wet: 0.1, params: { frequency: 0.4, octaves: 2, baseFrequency: 350 } }, { type: 'reverb', wet: 0.25, params: { decay: 2.5 } }],
+    drumsFx: [{ type: 'compressor', wet: 1, params: { threshold: -14, ratio: 3.5 } }],
+    melodyVol: 0.75, harmonyVol: 0.5, bassVol: 0.72, arpeggioVol: 0.3, counterVol: 0.38, drumsVol: 0.52,
   },
 };
 
@@ -167,6 +197,7 @@ export function compose(params: CompositionParams): Composition {
   const sections = generateSections(params.style, params.measures);
   const beatsPerBar = params.timeSignature[0];
   const tensionCurve = generateTensionCurve(sections, beatsPerBar);
+  const tensionArc = generateTensionArc(params);
 
   const tensionAtMeasure = (measure: number) => {
     const beat = measure * beatsPerBar + beatsPerBar / 2;
@@ -179,13 +210,14 @@ export function compose(params: CompositionParams): Composition {
     params.measures,
     params.style,
     params.harmonicComplexity,
+    params.timeSignature,
     tensionAtMeasure,
   );
 
   const sv = STYLE_VOICINGS[params.style];
 
   const melodyNotes = humanizeTrack(
-    generateMelody(params, chords, [4, 6], sections, tensionCurve),
+    generateMelody(params, chords, [4, 6], tensionArc, sections, tensionCurve),
     params.style, 'Melody', beatsPerBar,
   );
   const bassNotes = humanizeTrack(generateBassLine(params, chords), params.style, 'Bass', beatsPerBar);
@@ -293,10 +325,11 @@ export function recomposeTrack(
   const track = composition.tracks[trackIndex];
   const { params, chordProgression, sections, tensionCurve } = composition;
   const beatsPerBar = params.timeSignature[0];
+  const tensionArc = generateTensionArc(params);
 
   let newNotes;
   switch (track.name) {
-    case 'Melody': newNotes = generateMelody(params, chordProgression, [4, 6], sections, tensionCurve); break;
+    case 'Melody': newNotes = generateMelody(params, chordProgression, [4, 6], tensionArc, sections, tensionCurve); break;
     case 'Bass': newNotes = generateBassLine(params, chordProgression); break;
     case 'Harmony': newNotes = generatePadVoicings(params, chordProgression); break;
     case 'Arpeggio': newNotes = generateArpeggio(params, chordProgression); break;
