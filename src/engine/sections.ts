@@ -8,10 +8,10 @@ interface SectionTemplate {
   trackPresence: Record<string, number>;
 }
 
-const TRACK_NAMES = ['Melody', 'Harmony', 'Bass', 'Arpeggio', 'CounterMelody', 'Drums'] as const;
+const TRACK_NAMES = ['Melody', 'Harmony', 'Bass', 'Arpeggio', 'Countermelody', 'Drums'] as const;
 
 function tp(melody: number, harmony: number, bass: number, arp: number, counter: number, drums: number): Record<string, number> {
-  return { Melody: melody, Harmony: harmony, Bass: bass, Arpeggio: arp, CounterMelody: counter, Drums: drums };
+  return { Melody: melody, Harmony: harmony, Bass: bass, Arpeggio: arp, Countermelody: counter, Drums: drums };
 }
 
 const STYLE_ARCS: Record<CompositionStyle, SectionTemplate[]> = {

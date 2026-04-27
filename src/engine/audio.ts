@@ -503,8 +503,11 @@ export async function exportWav(composition: Composition): Promise<Blob> {
     const offlineReverb = new Tone.Reverb({ decay: 3, wet: 0.15 }).connect(offlineComp);
     await offlineReverb.ready;
 
+    const anySoloed = composition.tracks.some(t => t.solo);
+
     for (const track of composition.tracks) {
       if (track.muted) continue;
+      if (anySoloed && !track.solo) continue;
 
       const instrument = createInstrument(track.name, track.instrument);
       const channel = new Tone.Channel({
