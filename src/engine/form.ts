@@ -166,13 +166,32 @@ export function generateForm(params: CompositionParams): FormSection[] {
     currentMeasure += length;
   }
 
-  const totalAssigned = sections.reduce((s, sec) => s + sec.lengthMeasures, 0);
-  if (totalAssigned !== params.measures && sections.length > 0) {
-    const diff = params.measures - totalAssigned;
-    const longestIdx = sections.reduce((best, sec, i) =>
-      sec.lengthMeasures > sections[best].lengthMeasures ? i : best, 0);
-    sections[longestIdx].lengthMeasures += diff;
+  // Drop excess sections when there are more sections than measures
+  while (sections.length > params.measures) {
+    sections.pop();
+  }
 
+  const totalAssigned = sections.reduce((s, sec) => s + sec.lengthMeasures, 0);
+  let diff = params.measures - totalAssigned;
+
+  // Distribute surplus/deficit iteratively, never letting any section drop below 1
+  while (diff !== 0 && sections.length > 0) {
+    if (diff > 0) {
+      const longestIdx = sections.reduce((best, sec, i) =>
+        sec.lengthMeasures >= sections[best].lengthMeasures ? i : best, 0);
+      sections[longestIdx].lengthMeasures += 1;
+      diff -= 1;
+    } else {
+      const longestIdx = sections.reduce((best, sec, i) =>
+        sec.lengthMeasures > sections[best].lengthMeasures ? i : best, 0);
+      if (sections[longestIdx].lengthMeasures <= 1) break;
+      sections[longestIdx].lengthMeasures -= 1;
+      diff += 1;
+    }
+  }
+
+  // Recalculate start measures
+  if (sections.length > 0) {
     let recalc = 0;
     for (const sec of sections) {
       sec.startMeasure = recalc;

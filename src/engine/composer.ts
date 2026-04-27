@@ -382,7 +382,8 @@ export function recomposeTrack(
       newNotes = applyFormGating(generateDrumPattern(params), 'Drums', form, beatsPerBar);
       break;
     case 'Counter': {
-      const melodyNotes = generateMelody(params, chordProgression, [4, 6]);
+      const melodyTrack = composition.tracks.find(t => t.name === 'Melody');
+      const melodyNotes = melodyTrack?.notes ?? generateMelody(params, chordProgression, [4, 6]);
       let raw = generateCountermelody(params, chordProgression, melodyNotes, form);
       raw = addOrnaments(raw, params);
       newNotes = applyFormDynamics(raw, form, beatsPerBar);

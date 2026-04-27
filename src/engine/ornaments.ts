@@ -50,7 +50,7 @@ function createGraceNote(note: Note, params: CompositionParams): Note | null {
     pitch: gracePitch,
     velocity: Math.round(note.velocity * 0.6),
     duration: 0.08,
-    startBeat: note.startBeat - 0.08,
+    startBeat: Math.max(0, note.startBeat - 0.08),
     ornament: 'grace',
   };
 }
