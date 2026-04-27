@@ -48,8 +48,38 @@ export function ArrangementView() {
 
   return (
     <div className="flex-1 overflow-auto custom-scrollbar bg-zinc-950/30">
+      {/* Section labels */}
+      {composition.sections && composition.sections.length > 0 && (
+        <div className="sticky top-0 z-20 flex bg-zinc-900/95 border-b border-zinc-700/40 backdrop-blur-sm">
+          <div className="w-44 shrink-0 px-3 py-1.5 border-r border-zinc-800/50">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Form</span>
+          </div>
+          <div className="flex-1 relative" style={{ minWidth: viewWidth }}>
+            <div className="flex h-full">
+              {composition.sections.map((section, i) => {
+                const left = (section.startMeasure / composition.params.measures) * 100;
+                const width = (section.measures / composition.params.measures) * 100;
+                const hue = (i * 55 + 200) % 360;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-center border-r border-zinc-700/30 text-xs font-semibold"
+                    style={{
+                      position: 'absolute', left: `${left}%`, width: `${width}%`, height: '100%',
+                      background: `hsla(${hue}, 40%, 25%, 0.25)`,
+                    }}
+                  >
+                    <span className="text-zinc-300 text-[11px]">{section.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chord progression header */}
-      <div className="sticky top-0 z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm">
+      <div className="sticky top-7 z-10 flex bg-zinc-900/90 border-b border-zinc-800/50 backdrop-blur-sm">
         <div className="w-44 shrink-0 px-3 py-2 border-r border-zinc-800/50">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Chords</span>
         </div>

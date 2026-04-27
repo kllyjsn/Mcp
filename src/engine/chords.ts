@@ -136,6 +136,26 @@ const PROGRESSION_TEMPLATES: ProgressionTemplate[] = [
   { name: 'Gospel IV-V-iii-vi', degrees: [3, 4, 2, 5], style: 'gospel' },
 ];
 
+function secondaryDominantRoot(targetDegree: number, scaleIntervals: number[], keyIndex: number): { root: NoteName; quality: ChordQuality; roman: string } {
+  const targetInterval = targetDegree < scaleIntervals.length ? scaleIntervals[targetDegree] : 0;
+  const domInterval = (targetInterval + 7) % 12;
+  const root = NOTE_NAMES[(keyIndex + domInterval) % 12];
+  return { root, quality: 'dominant7', roman: `V7/${ROMAN_NUMERALS[targetDegree]}` };
+}
+
+function tritoneSubstitution(root: NoteName, quality: ChordQuality, roman: string): { root: NoteName; quality: ChordQuality; roman: string } {
+  const rootIdx = NOTE_NAMES.indexOf(root);
+  const subRoot = NOTE_NAMES[(rootIdx + 6) % 12];
+  return { root: subRoot, quality: quality === 'dominant7' ? 'dominant7' : 'major7', roman: `bII7(${roman})` };
+}
+
+function applyModalInterchange(quality: ChordQuality, degree: number, complexity: number): ChordQuality {
+  if (complexity < 8 || Math.random() > 0.25) return quality;
+  if (degree === 3 && quality === 'major7') return 'minor7';
+  if (degree === 0 && quality === 'major7' && Math.random() > 0.7) return 'dominant7';
+  return quality;
+}
+
 export function generateChordProgression(
   key: NoteName,
   scale: ScaleType,
@@ -154,6 +174,9 @@ export function generateChordProgression(
   let prevVoicing = buildChordVoicing(key, 'major', 3);
   let currentBeat = 0;
   const beatsPerMeasure = 4;
+  const keyIndex = NOTE_NAMES.indexOf(key);
+  const scaleIntervals = SCALE_INTERVALS[scale];
+  const majorIntervals = SCALE_INTERVALS['major'];
 
   for (let measure = 0; measure < measures; measure++) {
     const degreeIndex = measure % template.degrees.length;
@@ -171,10 +194,10 @@ export function generateChordProgression(
       else if (quality === 'minor7') quality = 'minor9';
     }
 
-    const scaleIntervals = SCALE_INTERVALS[scale];
-    const majorIntervals = SCALE_INTERVALS['major'];
+    quality = applyModalInterchange(quality, degree, complexity);
+
     const rootInterval = (scaleIntervals && degree < scaleIntervals.length) ? scaleIntervals[degree] : majorIntervals[degree];
-    const rootIndex = (NOTE_NAMES.indexOf(key) + rootInterval) % 12;
+    const rootIndex = (keyIndex + rootInterval) % 12;
     const chordRoot = NOTE_NAMES[rootIndex];
 
     const voicing = voiceLeadChord(prevVoicing, chordRoot, quality);
@@ -185,47 +208,55 @@ export function generateChordProgression(
       const halfDuration = beatsPerMeasure / 2;
 
       chords.push({
-        root: chordRoot,
-        quality,
-        inversion: 0,
-        voicing,
-        romanNumeral: diatonic.roman,
-        duration: halfDuration,
-        startBeat: currentBeat,
+        root: chordRoot, quality, inversion: 0, voicing,
+        romanNumeral: diatonic.roman, duration: halfDuration, startBeat: currentBeat,
       });
       currentBeat += halfDuration;
 
-      // passing chord: use the next measure's target as a secondary dominant approach
       const nextDegreeIndex = (measure + 1) % template.degrees.length;
       const nextDegree = template.degrees[nextDegreeIndex];
-      const passingDegree = (nextDegree + 4) % 7; // dominant approach
-      const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
-      const passingQuality: ChordQuality = complexity >= 5 ? 'dominant7' : 'major';
-      const passingInterval = (scaleIntervals && passingDegree < scaleIntervals.length) ? scaleIntervals[passingDegree] : majorIntervals[passingDegree];
-      const passingRootIndex = (NOTE_NAMES.indexOf(key) + passingInterval) % 12;
-      const passingRoot = NOTE_NAMES[passingRootIndex];
+
+      const useSecDom = complexity >= 6 && Math.random() > 0.5;
+      const useTritSub = complexity >= 9 && Math.random() > 0.7;
+
+      let passingRoot: NoteName;
+      let passingQuality: ChordQuality;
+      let passingRoman: string;
+
+      if (useSecDom) {
+        const secDom = secondaryDominantRoot(nextDegree, scaleIntervals ?? majorIntervals, keyIndex);
+        passingRoot = secDom.root;
+        passingQuality = secDom.quality;
+        passingRoman = secDom.roman;
+
+        if (useTritSub) {
+          const sub = tritoneSubstitution(passingRoot, passingQuality, passingRoman);
+          passingRoot = sub.root;
+          passingQuality = sub.quality;
+          passingRoman = sub.roman;
+        }
+      } else {
+        const passingDegree = (nextDegree + 4) % 7;
+        const passingDiatonic = diatonicChords[passingDegree % diatonicChords.length];
+        passingQuality = complexity >= 5 ? 'dominant7' : 'major';
+        passingRoman = passingDiatonic.roman;
+        const passingInterval = (scaleIntervals && passingDegree < scaleIntervals.length) ? scaleIntervals[passingDegree] : majorIntervals[passingDegree];
+        passingRoot = NOTE_NAMES[(keyIndex + passingInterval) % 12];
+      }
+
       const passingVoicing = voiceLeadChord(voicing, passingRoot, passingQuality);
 
       chords.push({
-        root: passingRoot,
-        quality: passingQuality,
-        inversion: 0,
-        voicing: passingVoicing,
-        romanNumeral: passingDiatonic.roman,
-        duration: halfDuration,
-        startBeat: currentBeat,
+        root: passingRoot, quality: passingQuality, inversion: 0,
+        voicing: passingVoicing, romanNumeral: passingRoman,
+        duration: halfDuration, startBeat: currentBeat,
       });
       currentBeat += halfDuration;
       prevVoicing = passingVoicing;
     } else {
       chords.push({
-        root: chordRoot,
-        quality,
-        inversion: 0,
-        voicing,
-        romanNumeral: diatonic.roman,
-        duration: beatsPerMeasure,
-        startBeat: currentBeat,
+        root: chordRoot, quality, inversion: 0, voicing,
+        romanNumeral: diatonic.roman, duration: beatsPerMeasure, startBeat: currentBeat,
       });
       currentBeat += beatsPerMeasure;
       prevVoicing = voicing;
