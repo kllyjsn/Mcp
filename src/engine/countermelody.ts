@@ -1,4 +1,4 @@
-import type { Note, Chord, CompositionParams, TensionCurve, Section } from '../types/music';
+import type { Note, Chord, CompositionParams, TensionCurve, Section, NoteName, ScaleType } from '../types/music';
 import { getScaleNotesMultiOctave, nearestScaleNote } from './scales';
 import { getTensionAtBeat, tensionToVelocityMod } from './tension';
 import { getTrackPresenceAtBeat } from './sections';
@@ -10,7 +10,7 @@ export function generateCounterMelody(
   sections: Section[],
   tensionCurve: TensionCurve,
 ): Note[] {
-  const scaleNotes = getScaleNotesMultiOctave(params.key, params.scale, 3, 5);
+  const scaleNotes = getScaleNotesMultiOctave(params.key, params.scale, 3, 6);
   const totalBeats = params.measures * params.timeSignature[0];
   const beatsPerBar = params.timeSignature[0];
   const notes: Note[] = [];
@@ -34,7 +34,7 @@ export function generateCounterMelody(
 
     let pitch: number;
     if (activeChord) {
-      pitch = pickCounterPitch(activeChord, mainNote, scaleNotes, tension);
+      pitch = pickCounterPitch(activeChord, mainNote, scaleNotes, tension, params.key, params.scale);
     } else {
       const center = scaleNotes[Math.floor(scaleNotes.length * 0.4)];
       pitch = nearestScaleNote(center, params.key, params.scale);
@@ -78,6 +78,8 @@ function pickCounterPitch(
   mainNote: Note | null,
   scaleNotes: number[],
   tension: number,
+  key: NoteName,
+  scale: ScaleType,
 ): number {
   const chordTones = chord.voicing;
   const mainPitch = mainNote?.pitch ?? 72;
@@ -100,5 +102,5 @@ function pickCounterPitch(
   }
 
   const inScale = scaleNotes.find(n => Math.abs(n - target) <= 1);
-  return inScale ?? nearestScaleNote(target, 'C', 'major');
+  return inScale ?? nearestScaleNote(target, key, scale);
 }

@@ -154,6 +154,10 @@ function applyChordEnrichment(
   complexity: number,
   tension: number,
 ): ChordQuality {
+  if (complexity >= 8 && Math.random() > 0.7) {
+    if (quality === 'major') return 'add9';
+    if (quality === 'minor') return 'sus2';
+  }
   if (complexity >= 5) {
     if (quality === 'major') quality = 'major7';
     else if (quality === 'minor') quality = 'minor7';
@@ -161,11 +165,6 @@ function applyChordEnrichment(
   if (complexity >= 7 && tension > 0.5 && Math.random() > 0.5) {
     if (quality === 'major7') quality = 'major9';
     else if (quality === 'minor7') quality = 'minor9';
-    else if (quality === 'dominant7') quality = 'dominant7';
-  }
-  if (complexity >= 8 && Math.random() > 0.7) {
-    if (quality === 'major') quality = 'add9';
-    else if (quality === 'minor') quality = 'sus2';
   }
   return quality;
 }
