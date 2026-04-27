@@ -95,7 +95,7 @@ export function buildShellVoicing(root: NoteName, quality: ChordQuality, octave:
   const intervals = CHORD_INTERVALS[quality];
   const notes = [rootMidi]; // root
   if (intervals.length >= 2) notes.push(rootMidi + intervals[1]); // 3rd
-  const seventh = intervals.find(i => i >= 10); // 7th
+  const seventh = intervals.find(i => i === 10 || i === 11); // 7th (minor or major)
   if (seventh !== undefined) {
     notes.push(rootMidi + seventh);
   } else if (intervals.length >= 3) {
@@ -114,7 +114,11 @@ export function buildRootlessVoicing(root: NoteName, quality: ChordQuality, octa
   // Type A rootless: 3-5-7-9
   const third = rootMidi + intervals[1];
   const fifth = rootMidi + intervals[2];
-  const seventh = rootMidi + (intervals[3] ?? intervals[2]);
+  const seventhInterval = intervals.find(i => i === 10 || i === 11);
+  if (seventhInterval === undefined) {
+    return buildChordVoicing(root, quality, octave);
+  }
+  const seventh = rootMidi + seventhInterval;
   const ninth = rootMidi + 14;
   return [third, fifth, seventh, ninth].sort((a, b) => a - b);
 }
@@ -124,7 +128,8 @@ export function buildUpperStructureVoicing(root: NoteName, quality: ChordQuality
   const rootMidi = noteNameToMidi(root, octave);
   const intervals = CHORD_INTERVALS[quality];
   // Base: root + 7th in LH, upper triad in RH
-  const base = [rootMidi, rootMidi + (intervals[3] ?? intervals[2] ?? 7)];
+  const seventhInterval = intervals.find(i => i === 10 || i === 11) ?? intervals[2] ?? 7;
+  const base = [rootMidi, rootMidi + seventhInterval];
   // Upper structure: major triad a whole step above (common upper structure)
   const upperRoot = rootMidi + 14; // 9th
   const upper = [upperRoot, upperRoot + 4, upperRoot + 7];
