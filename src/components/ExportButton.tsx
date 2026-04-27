@@ -33,7 +33,8 @@ export function ExportButton() {
       await togglePlay();
 
       const totalBeats = composition.params.measures * composition.params.timeSignature[0];
-      const durationMs = (totalBeats / composition.params.tempo) * 60 * 1000 + 1500;
+      const currentTempo = useStore.getState().params.tempo;
+      const durationMs = (totalBeats / currentTempo) * 60 * 1000 + 1500;
 
       timeoutRef.current = setTimeout(async () => {
         try {
